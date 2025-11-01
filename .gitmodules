@@ -1,0 +1,3 @@
+[submodule "firmware/lib/NmraDcc"]
+	path = firmware/lib/NmraDcc
+	url = https://github.com/mrrwa/NmraDcc.git
