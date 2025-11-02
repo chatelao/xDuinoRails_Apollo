@@ -1,3 +1,4 @@
+#define NMRA_DCC_PROCESS_MULTIFUNCTION
 #include <Arduino.h>
 #include <NmraDcc.h>
 

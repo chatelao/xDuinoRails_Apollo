@@ -2,15 +2,15 @@ name: Build Firmware
 
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
