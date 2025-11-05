@@ -12,12 +12,12 @@ jobs:
         protocol: [dcc, mm]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: 'true'
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
 
@@ -30,7 +30,7 @@ jobs:
       run: pio run -d firmware -e xiao_${{ matrix.protocol }}
 
     - name: Archive Firmware
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: firmware-${{ matrix.protocol }}
         path: firmware/.pio/build/xiao_${{ matrix.protocol }}/firmware.uf2
