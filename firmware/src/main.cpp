@@ -1,37 +1,27 @@
 #include <Arduino.h>
-#include "config.h" // Die neue zentrale Konfigurationsdatei einbinden
+#include "config.h"
+#include <XDuinoRails_MotorDriver.h>
 
-// =====================================================================================
-// DCC Protocol Implementation
-// =====================================================================================
-#ifdef PROTOCOL_DCC
+// Globales Motor-Objekt erstellen
+XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 
+#if defined(PROTOCOL_DCC)
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 #include <NmraDcc.h>
 
-// Pin-Zuweisungen für DCC
 #define DCC_SIGNAL_PIN 7
-#define HEADLIGHT_PIN 3 // Beispiel für eine Funktion
+#define HEADLIGHT_PIN 3
 
-// Ein DCC-Objekt erstellen
 NmraDcc dcc;
 
-// Callback-Funktion für DCC-Geschwindigkeit und -Richtung
 void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
   if (Addr == dcc.getAddr()) {
-    // Motorsteuerung basierend auf den Pins aus config.h
-    // Annahme: MOTOR_PIN_A ist PWM, MOTOR_PIN_B ist Richtung.
-    if (Dir == DCC_DIR_FWD) {
-      analogWrite(MOTOR_PIN_A, Speed);
-      digitalWrite(MOTOR_PIN_B, LOW);
-    } else {
-      digitalWrite(MOTOR_PIN_A, LOW);
-      analogWrite(MOTOR_PIN_B, Speed);
-    }
+    motor.setDirection(Dir == DCC_DIR_FWD);
+    int pps = map(Speed, 0, 255, 0, 200);
+    motor.setTargetSpeed(pps);
   }
 }
 
-// Callback-Funktion für DCC-Funktionen
 void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
   if (Addr == dcc.getAddr()) {
     if (FuncGrp == FN_0_4) {
@@ -44,93 +34,51 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
   }
 }
 
-void setup() {
-  // Pin-Modi setzen
-  pinMode(MOTOR_PIN_A, OUTPUT);
-  pinMode(MOTOR_PIN_B, OUTPUT);
-  pinMode(HEADLIGHT_PIN, OUTPUT);
-
-  // DCC-Bibliothek initialisieren
-  dcc.pin(DCC_SIGNAL_PIN, false);
-  dcc.init(MAN_ID_DIY, 1, FLAGS_MY_ADDRESS_ONLY, 0);
-
-  // Decoder-Adresse setzen
-  dcc.setCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS, 3);
-}
-
-void loop() {
-  // DCC-Pakete verarbeiten
-  dcc.process();
-}
-
-#endif // PROTOCOL_DCC
-
-
-// =====================================================================================
-// Märklin-Motorola (MM) Protocol Implementation
-// =====================================================================================
-#ifdef PROTOCOL_MM
-
+#elif defined(PROTOCOL_MM)
 #include <MaerklinMotorola.h>
 
-// MM-spezifische Einstellungen
 #define MM_ADDRESS 5
 #define MM_SIGNAL_PIN 7
 
-// Globales Objekt für den MM-Decoder erstellen
 MaerklinMotorola MM(MM_SIGNAL_PIN);
 
-// Zustandsvariable für die aktuelle Fahrtrichtung
-static bool s_direction_is_forward = true;
-
-// Interrupt Service Routine (ISR) für die Signalverarbeitung
 void mm_isr() {
   MM.PinChange();
 }
+#endif
 
 void setup() {
-  // Pin-Modi für den Motor setzen
-  pinMode(MOTOR_PIN_A, OUTPUT);
-  pinMode(MOTOR_PIN_B, OUTPUT);
+  motor.begin();
+  motor.setAcceleration(MOTOR_ACCELERATION);
+  motor.setDeceleration(MOTOR_DECELERATION);
+  motor.setStartupKick(MOTOR_STARTUP_KICK_PWM, MOTOR_STARTUP_KICK_DURATION);
 
-  // Interrupt an den Signal-Pin binden
+#if defined(PROTOCOL_DCC)
+  pinMode(HEADLIGHT_PIN, OUTPUT);
+  dcc.pin(DCC_SIGNAL_PIN, false);
+  dcc.init(MAN_ID_DIY, 1, FLAGS_MY_ADDRESS_ONLY, 0);
+  dcc.setCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS, 3);
+#elif defined(PROTOCOL_MM)
   attachInterrupt(digitalPinToInterrupt(MM_SIGNAL_PIN), mm_isr, CHANGE);
+#endif
 }
 
 void loop() {
-  // Empfangene Daten parsen
+#if defined(PROTOCOL_DCC)
+  dcc.process();
+#elif defined(PROTOCOL_MM)
   MM.Parse();
-
-  // Überprüfen, ob ein validiertes Datenpaket vorhanden ist
   MaerklinMotorolaData* data = MM.GetData();
-
   if (data && !data->IsMagnet && data->Address == MM_ADDRESS) {
-    // Befehl verarbeiten
-
     if (data->ChangeDir) {
-      // Fahrtrichtung umschalten und Motor anhalten
-      s_direction_is_forward = !s_direction_is_forward;
-      analogWrite(MOTOR_PIN_A, 0);
-      digitalWrite(MOTOR_PIN_B, 0);
+      motor.setDirection(!motor.getDirection());
     } else if (data->Stop) {
-      // Motor anhalten
-      analogWrite(MOTOR_PIN_A, 0);
-      digitalWrite(MOTOR_PIN_B, 0);
+      motor.setTargetSpeed(0);
     } else {
-      // Geschwindigkeitsbefehl
-      // MM-Geschwindigkeit (0-14) auf den PWM-Bereich (0-255) abbilden
-      uint8_t pwm_speed = map(data->Speed, 0, 14, 0, 255);
-
-      // Motor basierend auf der gespeicherten Richtung ansteuern
-      if (s_direction_is_forward) {
-        analogWrite(MOTOR_PIN_A, pwm_speed);
-        digitalWrite(MOTOR_PIN_B, LOW);
-      } else {
-        digitalWrite(MOTOR_PIN_A, LOW);
-        analogWrite(MOTOR_PIN_B, pwm_speed);
-      }
+      uint8_t pps = map(data->Speed, 0, 14, 0, 200);
+      motor.setTargetSpeed(pps);
     }
   }
+#endif
+  motor.update();
 }
-
-#endif // PROTOCOL_MM
