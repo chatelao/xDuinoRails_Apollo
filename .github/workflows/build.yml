@@ -7,17 +7,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        protocol: [dcc, mm]
+
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: 'true'
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.9'
+
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
         pip install -U platformio
-    - name: Build Firmware
-      run: pio run -d firmware
+
+    - name: Build Firmware (${{ matrix.protocol }})
+      run: pio run -d firmware -e xiao_${{ matrix.protocol }}
+
+    - name: Archive Firmware
+      uses: actions/upload-artifact@v3
+      with:
+        name: firmware-${{ matrix.protocol }}
+        path: firmware/.pio/build/xiao_${{ matrix.protocol }}/firmware.uf2
