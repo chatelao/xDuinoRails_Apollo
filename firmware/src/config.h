@@ -84,36 +84,14 @@
 // =====================================================================================
 // Motor-Konfiguration für xDuinoRails_MotorControl
 // =====================================================================================
-// Hier werden die Parameter für die erweiterte Motorsteuerung definiert. Passen
-// Sie diese Werte an, um das Fahrverhalten Ihrer Lokomotive zu optimieren.
-
-/**
- * @brief Beschleunigungsrate in "Pulsen pro Sekunde pro Sekunde" (PPS^2).
- * Definiert, wie schnell die Lokomotive ihre Zielgeschwindigkeit erreicht.
- * Ein höherer Wert bedeutet eine schnellere Beschleunigung.
- * Beispiel: Ein Wert von 50 bedeutet, dass die Geschwindigkeit jede Sekunde um 50 PPS zunimmt.
- */
-#define MOTOR_ACCELERATION 50
-
-/**
- * @brief Bremsrate in "Pulsen pro Sekunde pro Sekunde" (PPS^2).
- * Definiert, wie schnell die Lokomotive abbremst.
- * Ein höherer Wert bedeutet eine stärkere (schnellere) Bremsung.
- * Beispiel: Ein Wert von 100 bedeutet, dass die Geschwindigkeit jede Sekunde um 100 PPS abnimmt.
- */
-#define MOTOR_DECELERATION 100
-
-/**
- * @brief PWM-Wert (0-255) für den "Startup Kick".
- * Ein kurzer, starker Impuls, um die anfängliche Trägheit des Motors zu überwinden
- * und ein sanftes Anfahren zu ermöglichen, besonders bei niedrigen Geschwindigkeiten.
- */
-#define MOTOR_STARTUP_KICK_PWM 80
+// Die primären Motoreinstellungen (Beschleunigung, Bremszeit, Anfahrspannung)
+// werden nun über DCC-CVs (CV 2, 3, 4) konfiguriert. Die hier verbleibenden
+// Werte sind für speziellere Anpassungen.
 
 /**
  * @brief Dauer des "Startup Kick" in Millisekunden.
- * Definiert, wie lange der unter `MOTOR_STARTUP_KICK_PWM` definierte Impuls
- * angelegt wird.
+ * Definiert, wie lange der unter CV 2 (`MOTOR_STARTUP_KICK_PWM`) definierte Impuls
+ * angelegt wird. Dieser Wert ist nicht per CV änderbar.
  */
 #define MOTOR_STARTUP_KICK_DURATION 10
 

@@ -102,6 +102,37 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
   }
 }
 
+/**
+ * @brief Callback function for DCC CV programming.
+ *
+ * This function is called by the NmraDcc library whenever a CV write
+ * is acknowledged. It allows the firmware to react to changes in CV values,
+ * for example by updating motor control parameters.
+ *
+ * @param CV The CV number that was written.
+ * @param Value The new value of the CV.
+ */
+void notifyCVChange(uint16_t CV, uint8_t Value) {
+    switch (CV) {
+        case CV_START_VOLTAGE:
+            // Update motor startup kick PWM value. Duration remains the same.
+            motor.setStartupKick(Value, MOTOR_STARTUP_KICK_DURATION);
+            break;
+        case CV_ACCELERATION_RATE:
+            // The CV value is a multiplier; convert it to a suitable PPS^2 value.
+            // This conversion factor (e.g., 2.5) may need tuning.
+            motor.setAcceleration(Value * 2.5);
+            break;
+        case CV_DECELERATION_RATE:
+            // The CV value is a multiplier; convert it to a suitable PPS^2 value.
+            motor.setDeceleration(Value * 2.5);
+            break;
+        default:
+            // Do nothing for other CVs
+            break;
+    }
+}
+
 // =====================================================================================
 // Protocol-Specific Logic: Märklin-Motorola (MM)
 // =====================================================================================
@@ -144,9 +175,6 @@ void setup() {
   pinMode(LIGHT_PIN_REV, OUTPUT);
 
   motor.begin();
-  motor.setAcceleration(MOTOR_ACCELERATION);
-  motor.setDeceleration(MOTOR_DECELERATION);
-  motor.setStartupKick(MOTOR_STARTUP_KICK_PWM, MOTOR_STARTUP_KICK_DURATION);
 
   updateLights(); // Initiale Licht-Einstellung
 
@@ -155,7 +183,19 @@ void setup() {
   // Configure the DCC library
   dcc.pin(DCC_SIGNAL_PIN, false); // Set the DCC signal pin, not inverted
   dcc.init(MAN_ID_DIY, 1, FLAGS_MY_ADDRESS_ONLY, 0); // Initialize with a DIY manufacturer ID
-  dcc.setCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS, 3); // Set the default DCC address to 3
+  dcc.setCVWriteCallback(notifyCVChange); // Register the callback for CV changes
+
+  // Set default CV values
+  dcc.setCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS, 3);
+  dcc.setCV(CV_START_VOLTAGE, 80);
+  dcc.setCV(CV_ACCELERATION_RATE, 20);
+  dcc.setCV(CV_DECELERATION_RATE, 40);
+  dcc.setCV(CV_MANUFACTURER_ID, 165); // NMRA ID for DIY projects
+
+  // Load motor settings from CVs
+  notifyCVChange(CV_START_VOLTAGE, dcc.getCV(CV_START_VOLTAGE));
+  notifyCVChange(CV_ACCELERATION_RATE, dcc.getCV(CV_ACCELERATION_RATE));
+  notifyCVChange(CV_DECELERATION_RATE, dcc.getCV(CV_DECELERATION_RATE));
 #elif defined(PROTOCOL_MM)
   // Attach the interrupt for the MM signal pin
   attachInterrupt(digitalPinToInterrupt(MM_SIGNAL_PIN), mm_isr, CHANGE);
