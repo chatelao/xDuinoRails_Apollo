@@ -4,6 +4,7 @@ AGENTS.md
 - Keep sources in “src”, exceptions are possible depending on special technologies
 
 # Documentation
+- Keep ".md" documentation filenames uppercase snake
 - Create and maintain on every change a README.md, add the usual summary
 - Create a LICENSE.md if missing with AGPL 3.0 (Affero GNU)
 - Create and maintain on every change a “CONTRIBUTE.md”
@@ -14,7 +15,6 @@ AGENTS.md
 # Code
 Follow the most used file & code naming conventions in the project:
 - If not yet provided use “snake case”
-- Keep ".md" documentation files uppercase snake
 - Comment lines if magic numbers or complex operations are used
 
 # Testing
