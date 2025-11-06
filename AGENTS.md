@@ -1,5 +1,3 @@
-AGENTS.md
-
 # Structure
 - Keep sources in “src”, exceptions are possible depending on special technologies
 
