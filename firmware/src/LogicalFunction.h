@@ -38,6 +38,12 @@ public:
      */
     void setActive(bool active);
 
+    /**
+     * @brief Set the dimmed state of the function's effect.
+     * @param dimmed True to set to dimmed, false for full brightness.
+     */
+    void setDimmed(bool dimmed);
+
 private:
     LightEffect* _effect;
     std::vector<PhysicalOutput*> _outputs;

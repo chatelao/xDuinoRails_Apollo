@@ -2,7 +2,16 @@
 #define FUNCTION_MANAGER_H
 
 #include <vector>
+#include <map>
 #include "LogicalFunction.h"
+#include "FunctionMapping.h"
+
+#define MAX_DCC_FUNCTIONS 29
+
+enum DecoderDirection {
+    DECODER_DIRECTION_REVERSE = 0,
+    DECODER_DIRECTION_FORWARD = 1
+};
 
 /**
  * @file FunctionManager.h
@@ -11,32 +20,40 @@
 
 class FunctionManager {
 public:
+    FunctionManager();
     ~FunctionManager();
 
-    /**
-     * @brief Add a logical function to be managed.
-     * @param function Pointer to the LogicalFunction. The manager takes ownership.
-     */
     void addLogicalFunction(LogicalFunction* function);
+    void addConditionVariable(const ConditionVariable& cv);
+    void addMappingRule(const MappingRule& rule);
 
-    /**
-     * @brief Update all managed functions. Should be called in the main loop.
-     * @param delta_ms Time elapsed since the last update.
-     */
     void update(uint32_t delta_ms);
 
-    /**
-     * @brief Process a DCC function key event.
-     * @param functionNumber The function number (0-28).
-     * @param functionState The state of the function (true for on, false for off).
-     */
+    // --- State Update Methods ---
     void setFunctionState(uint8_t functionNumber, bool functionState);
+    void setDirection(DecoderDirection direction);
+    void setSpeed(uint16_t speed);
+
+    // --- State Getter Methods (for evaluation) ---
+    bool getFunctionState(uint8_t functionNumber) const;
+    DecoderDirection getDirection() const;
+    uint16_t getSpeed() const;
+    bool getConditionVariableState(uint8_t cv_id) const;
+
 
 private:
+    void evaluateMapping();
+
     std::vector<LogicalFunction*> _logical_functions;
-    // For Phase 1, we will use a simple, direct mapping.
-    // This will be expanded in Phase 2.
-    // For now, we assume F-key index matches logical_function index.
+    std::vector<ConditionVariable> _condition_variables;
+    std::vector<MappingRule> _mapping_rules;
+
+    // --- Decoder State ---
+    bool _function_states[MAX_DCC_FUNCTIONS] = {false};
+    DecoderDirection _direction = DECODER_DIRECTION_FORWARD;
+    uint16_t _speed = 0;
+    std.map<uint8_t, bool> _cv_states; // Cache for evaluated ConditionVariable states
+    bool _state_changed = true; // Flag to trigger re-evaluation
 };
 
 #endif // FUNCTION_MANAGER_H

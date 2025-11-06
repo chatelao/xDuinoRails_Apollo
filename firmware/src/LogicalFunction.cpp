@@ -23,6 +23,15 @@ void LogicalFunction::setActive(bool active) {
     }
 }
 
+void LogicalFunction::setDimmed(bool dimmed) {
+    if (_effect) {
+        // Use dynamic_cast to safely check if the effect is an EffectDimming
+        if (EffectDimming* dimmable_effect = dynamic_cast<EffectDimming*>(_effect)) {
+            dimmable_effect->setDimmed(dimmed);
+        }
+    }
+}
+
 void LogicalFunction::update(uint32_t delta_ms) {
     if (!_effect) {
         return;
