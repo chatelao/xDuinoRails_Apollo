@@ -1,30 +1,24 @@
 #include <Arduino.h>
 #include "config.h"
 #include <XDuinoRails_MotorDriver.h>
+#include "FunctionManager.h"
 
 // Globales Motor-Objekt erstellen
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 
-// Zustand der Beleuchtung (F0)
-bool f0_state = true; // Lichter sind beim Start an
+// Globalen FunctionManager und physische Ausgänge erstellen
+FunctionManager functionManager;
 
-// Funktion zur Steuerung der Lichter
-void updateLights() {
-  if (!f0_state) {
-    // Lichter sind ausgeschaltet
-    analogWrite(LIGHT_PIN_FWD, 0);
-    analogWrite(LIGHT_PIN_REV, 0);
-    return;
-  }
-
-  if (motor.getDirection()) { // true == vorwärts
-    analogWrite(LIGHT_PIN_FWD, LIGHT_BRIGHTNESS);
-    analogWrite(LIGHT_PIN_REV, 0);
-  } else { // false == rückwärts
-    analogWrite(LIGHT_PIN_FWD, 0);
-    analogWrite(LIGHT_PIN_REV, LIGHT_BRIGHTNESS);
-  }
-}
+#ifdef FUNC_PHYSICAL_PIN_0
+PhysicalOutput F_OUT_0(FUNC_PHYSICAL_PIN_0);
+#endif
+#ifdef FUNC_PHYSICAL_PIN_1
+PhysicalOutput F_OUT_1(FUNC_PHYSICAL_PIN_1);
+#endif
+#ifdef FUNC_PHYSICAL_PIN_2
+PhysicalOutput F_OUT_2(FUNC_PHYSICAL_PIN_2);
+#endif
+// Fügen Sie hier bei Bedarf weitere PhysicalOutput-Objekte hinzu
 
 
 #if defined(PROTOCOL_DCC)
@@ -37,8 +31,9 @@ NmraDcc dcc;
 
 void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
   if (Addr == dcc.getAddr()) {
-    motor.setDirection(Dir == DCC_DIR_FWD);
-    updateLights(); // Lichtstatus nach Richtungsänderung aktualisieren
+    bool is_forward = (Dir == DCC_DIR_FWD);
+    motor.setDirection(is_forward);
+    functionManager.setDirection(is_forward);
     int pps = map(Speed, 0, 255, 0, 200);
     motor.setTargetSpeed(pps);
   }
@@ -47,9 +42,13 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
 void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
   if (Addr == dcc.getAddr()) {
     if (FuncGrp == FN_0_4) {
-      f0_state = (FuncState & FN_BIT_00);
-      updateLights();
+      functionManager.setFunctionKeyState(0, FuncState & FN_BIT_00);
+      functionManager.setFunctionKeyState(1, FuncState & FN_BIT_01);
+      functionManager.setFunctionKeyState(2, FuncState & FN_BIT_02);
+      functionManager.setFunctionKeyState(3, FuncState & FN_BIT_03);
+      functionManager.setFunctionKeyState(4, FuncState & FN_BIT_04);
     }
+    // Fügen Sie hier bei Bedarf weitere Funktionsgruppen (FN_5_8, etc.) hinzu
   }
 }
 
@@ -67,15 +66,45 @@ void mm_isr() {
 #endif
 
 void setup() {
-  pinMode(LIGHT_PIN_FWD, OUTPUT);
-  pinMode(LIGHT_PIN_REV, OUTPUT);
+  // --- Initialisierung der physischen Ausgänge ---
+#ifdef FUNC_PHYSICAL_PIN_0
+  F_OUT_0.begin();
+#endif
+#ifdef FUNC_PHYSICAL_PIN_1
+  F_OUT_1.begin();
+#endif
+#ifdef FUNC_PHYSICAL_PIN_2
+  F_OUT_2.begin();
+#endif
+  // Initialisieren Sie hier weitere Ausgänge...
+
+  // --- Registrierung der logischen Funktionen ---
+#ifdef LOGICAL_FUNC_0_TYPE
+  functionManager.registerFunction(
+    LOGICAL_FUNC_0_MAPPED_KEY,
+    &F_OUT_0,
+    new EffectSteady(LOGICAL_FUNC_0_PARAM_1),
+    LOGICAL_FUNC_0_DIRECTION
+  );
+#endif
+#ifdef LOGICAL_FUNC_1_TYPE
+  functionManager.registerFunction(
+    LOGICAL_FUNC_1_MAPPED_KEY,
+    &F_OUT_1,
+    new EffectSteady(LOGICAL_FUNC_1_PARAM_1),
+    LOGICAL_FUNC_1_DIRECTION
+  );
+#endif
+  // Fügen Sie hier die Registrierung für weitere logische Funktionen hinzu...
 
   motor.begin();
   motor.setAcceleration(MOTOR_ACCELERATION);
   motor.setDeceleration(MOTOR_DECELERATION);
   motor.setStartupKick(MOTOR_STARTUP_KICK_PWM, MOTOR_STARTUP_KICK_DURATION);
 
-  updateLights(); // Initiale Licht-Einstellung
+  // Initialen Zustand der Funktionen setzen
+  functionManager.setDirection(motor.getDirection());
+  functionManager.setFunctionKeyState(0, true); // F0 ist standardmäßig an
 
 #if defined(PROTOCOL_DCC)
   dcc.pin(DCC_SIGNAL_PIN, false);
@@ -93,13 +122,12 @@ void loop() {
   MM.Parse();
   MaerklinMotorolaData* data = MM.GetData();
   if (data && !data->IsMagnet && data->Address == MM_ADDRESS) {
-    // Lichtstatus auswerten
-    f0_state = data->Function;
-    updateLights();
+    functionManager.setFunctionKeyState(0, data->Function);
 
     if (data->ChangeDir) {
-      motor.setDirection(!motor.getDirection());
-      updateLights(); // Licht nach Richtungswechsel umschalten
+      bool new_dir = !motor.getDirection();
+      motor.setDirection(new_dir);
+      functionManager.setDirection(new_dir);
     } else if (data->Stop) {
       motor.setTargetSpeed(0);
     } else {
@@ -109,4 +137,5 @@ void loop() {
   }
 #endif
   motor.update();
+  functionManager.update();
 }
