@@ -22,12 +22,33 @@ XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_
 // =====================================================================================
 // Protocol-Specific Logic: DCC
 // =====================================================================================
+// Zustand der Beleuchtung (F0)
+bool f0_state = true; // Lichter sind beim Start an
+
+// Funktion zur Steuerung der Lichter
+void updateLights() {
+  if (!f0_state) {
+    // Lichter sind ausgeschaltet
+    analogWrite(LIGHT_PIN_FWD, 0);
+    analogWrite(LIGHT_PIN_REV, 0);
+    return;
+  }
+
+  if (motor.getDirection()) { // true == vorwärts
+    analogWrite(LIGHT_PIN_FWD, LIGHT_BRIGHTNESS);
+    analogWrite(LIGHT_PIN_REV, 0);
+  } else { // false == rückwärts
+    analogWrite(LIGHT_PIN_FWD, 0);
+    analogWrite(LIGHT_PIN_REV, LIGHT_BRIGHTNESS);
+  }
+}
+
+
 #if defined(PROTOCOL_DCC)
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 #include <NmraDcc.h>
 
 #define DCC_SIGNAL_PIN 7
-#define HEADLIGHT_PIN 3
 
 /**
  * @brief Global NmraDcc object for handling the DCC protocol.
@@ -51,6 +72,7 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
   if (Addr == dcc.getAddr()) {
     motor.setDirection(Dir == DCC_DIR_FWD);
     // Map DCC speed steps (0-255) to motor's internal PPS (Pulses Per Second)
+    updateLights(); // Lichtstatus nach Richtungsänderung aktualisieren
     int pps = map(Speed, 0, 255, 0, 200);
     motor.setTargetSpeed(pps);
   }
@@ -118,10 +140,15 @@ void mm_isr() {
  */
 void setup() {
   // Initialize motor controller and load settings from config.h
+  pinMode(LIGHT_PIN_FWD, OUTPUT);
+  pinMode(LIGHT_PIN_REV, OUTPUT);
+
   motor.begin();
   motor.setAcceleration(MOTOR_ACCELERATION);
   motor.setDeceleration(MOTOR_DECELERATION);
   motor.setStartupKick(MOTOR_STARTUP_KICK_PWM, MOTOR_STARTUP_KICK_DURATION);
+
+  updateLights(); // Initiale Licht-Einstellung
 
 #if defined(PROTOCOL_DCC)
   pinMode(HEADLIGHT_PIN, OUTPUT);
@@ -153,9 +180,14 @@ void loop() {
   MaerklinMotorolaData* data = MM.GetData();
   // Check if a valid command for our address has been received
   if (data && !data->IsMagnet && data->Address == MM_ADDRESS) {
+    // Lichtstatus auswerten
+    f0_state = data->Function;
+    updateLights();
+
     if (data->ChangeDir) {
       // Direction change command
       motor.setDirection(!motor.getDirection());
+      updateLights(); // Licht nach Richtungswechsel umschalten
     } else if (data->Stop) {
       // Stop command
       motor.setTargetSpeed(0);

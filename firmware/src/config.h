@@ -72,6 +72,14 @@
  */
 #define MOTOR_BEMF_B_PIN A2
 
+// =====================================================================================
+// Licht-Konfiguration
+// =====================================================================================
+// Definieren Sie hier die Pins für die richtungsabhängige Beleuchtung.
+#define LIGHT_PIN_FWD 26 // Licht vorne
+#define LIGHT_PIN_REV 27 // Licht hinten
+#define LIGHT_BRIGHTNESS 255 // Helligkeit (0-255)
+
 
 // =====================================================================================
 // Motor-Konfiguration für xDuinoRails_MotorControl
