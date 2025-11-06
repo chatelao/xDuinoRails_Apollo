@@ -2,67 +2,90 @@
 #define CONFIG_H
 
 // =====================================================================================
-// Protokoll-Konfiguration
+// Protocol Configuration
 // =====================================================================================
-// Wählen Sie hier das zu verwendende Protokoll aus, indem Sie eine der folgenden
-// Zeilen auskommentieren oder einkommentieren. Es darf immer nur ein Protokoll
-// aktiv sein.
+// Select the protocol to use by commenting or uncommenting one of the following
+// lines. Only one protocol can be active at a time.
 //
-// Für PlatformIO-Benutzer: Diese Einstellung wird durch die Umgebung in
-// `platformio.ini` automatisch überschrieben.
+// For PlatformIO users: This setting is automatically overridden by the
+// environment in `platformio.ini`.
 //
-// Für Arduino-IDE-Benutzer: Stellen Sie sicher, dass die benötigten Bibliotheken
-// (z.B. NmraDcc, MaerklinMotorola) manuell über den Bibliotheksverwalter
-// installiert sind.
+// For Arduino IDE users: Make sure that the required libraries
+// (e.g. NmraDcc, MaerklinMotorola) are manually installed via the
+// Library Manager.
 
 #define PROTOCOL_MM
 // #define PROTOCOL_DCC
 
 
 // =====================================================================================
-// Hardware-Pin-Konfiguration
+// Hardware Pin Configuration
 // =====================================================================================
-// Definieren Sie hier die Pins, die für die Ansteuerung der Motor-H-Brücke
-// verwendet werden.
+// Define the pins used for controlling the motor H-bridge.
 
-// Pin für das PWM-Signal (Geschwindigkeit)
+// Pin for the PWM signal (speed)
 #define MOTOR_PIN_A 0
 
-// Pin für die Richtungsumschaltung
+// Pin for direction switching
 #define MOTOR_PIN_B 1
 
-// Pins für die BEMF-Messung (Analog-Eingänge)
+// Pins for BEMF measurement (analog inputs)
 #define MOTOR_BEMF_A_PIN A3
 #define MOTOR_BEMF_B_PIN A2
 
 // =====================================================================================
-// Licht-Konfiguration
+// Function Output Configuration (Light & AUX)
 // =====================================================================================
-// Definieren Sie hier die Pins für die richtungsabhängige Beleuchtung.
-#define LIGHT_PIN_FWD 26 // Licht vorne
-#define LIGHT_PIN_REV 27 // Licht hinten
-#define LIGHT_BRIGHTNESS 255 // Helligkeit (0-255)
+// This new system replaces the old, static light configuration.
+// It allows for flexible assignment of functions (e.g. light, smoke)
+// to outputs and their control via function keys.
+
+// Step 1: Define the physical output pins you want to use.
+#define FUNC_PHYSICAL_PIN_0 26 // e.g. front light
+#define FUNC_PHYSICAL_PIN_1 27 // e.g. rear light
+// #define FUNC_PHYSICAL_PIN_2 28 // e.g. cab light
+
+// Step 2: Configure the "Logical Functions".
+// Each logical function combines a physical pin with a behavior (effect)
+// and maps it to a function key and optionally to the direction of travel.
+
+// --- Logical Function 0 (e.g. Front Light) ---
+#define LOGICAL_FUNC_0_TYPE         STEADY // Effect type (STEADY or DIMMING)
+#define LOGICAL_FUNC_0_OUTPUT_PIN   FUNC_PHYSICAL_PIN_0 // Which pin is controlled?
+#define LOGICAL_FUNC_0_MAPPED_KEY   0      // Which function key controls the function? (F0)
+#define LOGICAL_FUNC_0_DIRECTION    1      // Direction dependency: 1=Forward, -1=Reverse, 0=Always on
+#define LOGICAL_FUNC_0_PARAM_1      255    // Parameter 1 (e.g. brightness for STEADY)
+
+// --- Logical Function 1 (e.g. Rear Light) ---
+#define LOGICAL_FUNC_1_TYPE         STEADY
+#define LOGICAL_FUNC_1_OUTPUT_PIN   FUNC_PHYSICAL_PIN_1
+#define LOGICAL_FUNC_1_MAPPED_KEY   0
+#define LOGICAL_FUNC_1_DIRECTION    -1
+#define LOGICAL_FUNC_1_PARAM_1      255
+
+// To add another function, simply copy a block and
+// increase the number (e.g. LOGICAL_FUNC_2_...).
 
 
 // =====================================================================================
-// Motor-Konfiguration für xDuinoRails_MotorControl
+// Motor Configuration for xDuinoRails_MotorControl
 // =====================================================================================
-// Hier werden die Parameter für die erweiterte Motorsteuerung definiert. Passen
-// Sie diese Werte an, um das Fahrverhalten Ihrer Lokomotive zu optimieren.
+// Here the parameters for the extended motor control are defined. Adjust
+// these values to optimize the driving behavior of your locomotive.
 
-// Beschleunigungsrate in "Pulsen pro Sekunde pro Sekunde" (PPS^2).
-// Ein höherer Wert bedeutet eine schnellere Beschleunigung.
-// Ein Wert von 50 bedeutet, dass die Geschwindigkeit jede Sekunde um 50 PPS zunimmt.
+// Acceleration rate in "pulses per second per second" (PPS^2).
+// A higher value means faster acceleration.
+// A value of 50 means that the speed increases by 50 PPS every second.
 #define MOTOR_ACCELERATION 50
 
-// Bremsrate in "Pulsen pro Sekunde pro Sekunde" (PPS^2).
-// Ein höherer Wert bedeutet eine stärkere Bremsung.
-// Ein Wert von 100 bedeutet, dass die Geschwindigkeit jede Sekunde um 100 PPS abnimmt.
+// Braking rate in "pulses per second per second" (PPS^2).
+// A higher value means stronger braking.
+// A value of 100 means that the speed decreases by 100 PPS every second.
 #define MOTOR_DECELERATION 100
 
-// "Startup Kick" zum Überwinden der anfänglichen Trägheit des Motors.
-// MOTOR_STARTUP_KICK_PWM: Der PWM-Wert (0-255), der kurz angelegt wird.
-// MOTOR_STARTUP_KICK_DURATION: Die Dauer des Kicks in Millisekunden.
+// "Startup Kick" to overcome the initial inertia of the motor.
+// MOTOR_STARTUP_KICK_PWM: The PWM value (0-255) that is briefly applied.
+// MOTOR_STARTUP_KICK_DURATION: The duration of the kick in milliseconds.
 #define MOTOR_STARTUP_KICK_PWM 80
 #define MOTOR_STARTUP_KICK_DURATION 10
 
