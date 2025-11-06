@@ -8,12 +8,12 @@
 
 /**
  * @file FunctionManager.h
- * @brief Definiert die Klassen für das Management von Licht- und Sonderfunktionen.
+ * @brief Defines the classes for managing lighting and auxiliary functions.
  */
 
 /**
  * @class LightEffect
- * @brief Abstrakte Basisklasse für alle Licht- und Funktionseffekte.
+ * @brief Abstract base class for all light and function effects.
  */
 class LightEffect {
 public:
@@ -29,7 +29,7 @@ protected:
 
 /**
  * @class EffectSteady
- * @brief Implementiert einen "Dauerlicht"-Effekt mit konstanter Helligkeit.
+ * @brief Implements a "steady on" effect with constant brightness.
  */
 class EffectSteady : public LightEffect {
 public:
@@ -42,7 +42,7 @@ private:
 
 /**
  * @class EffectDimming
- * @brief Implementiert einen Effekt zum Umschalten zwischen zwei Helligkeiten.
+ * @brief Implements an effect for switching between two brightness levels.
  */
 class EffectDimming : public LightEffect {
 public:
@@ -61,7 +61,7 @@ private:
 
 /**
  * @class PhysicalOutput
- * @brief Repräsentiert einen physischen Ausgangspin des Mikrocontrollers.
+ * @brief Represents a physical output pin of the microcontroller.
  */
 class PhysicalOutput {
 public:
@@ -70,12 +70,12 @@ public:
     void write(uint8_t value);
 private:
     uint8_t pin;
-    uint8_t last_value = 255; // Initialwert, um ein erstes Schreiben zu erzwingen
+    uint8_t last_value = 255; // Initial value to force a first write
 };
 
 /**
  * @class LogicalFunction
- * @brief Verbindet einen Effekt mit einem physischen Ausgang.
+ * @brief Connects an effect to a physical output.
  */
 class LogicalFunction {
 public:
@@ -92,11 +92,11 @@ private:
 
 // --- Management Class ---
 
-#define MAX_LOGICAL_FUNCTIONS 16 // Unterstützt F0-F15
+#define MAX_LOGICAL_FUNCTIONS 16 // Supports F0-F15
 
 /**
  * @class FunctionManager
- * @brief Verwaltet alle logischen Funktionen und deren Lebenszyklen.
+ * @brief Manages all logical functions and their lifecycles.
  */
 class FunctionManager {
 public:
@@ -104,36 +104,36 @@ public:
     ~FunctionManager();
 
     /**
-     * @brief Registriert eine neue logische Funktion und verknüpft sie mit einer F-Taste.
-     * @param function_key Die F-Taste (0-28), die diese Funktion auslöst.
-     * @param output Zeiger auf das PhysicalOutput-Objekt.
-     * @param effect Zeiger auf das LightEffect-Objekt.
-     * @param direction_dependency Gibt an, ob diese Funktion richtungsabhängig ist.
-     *        0 = immer aktiv (wenn F-Taste an), 1 = nur bei Vorwärtsfahrt, -1 = nur bei Rückwärtsfahrt.
+     * @brief Registers a new logical function and maps it to a function key.
+     * @param function_key The function key (0-28) that triggers this function.
+     * @param output Pointer to the PhysicalOutput object.
+     * @param effect Pointer to the LightEffect object.
+     * @param direction_dependency Specifies if this function is direction-dependent.
+     *        0 = always active (if key is on), 1 = only when forward, -1 = only when reverse.
      */
     void registerFunction(uint8_t function_key, PhysicalOutput* output, LightEffect* effect, int8_t direction_dependency = 0);
 
     /**
-     * @brief Initialisiert alle zugehörigen Ausgänge.
+     * @brief Initializes all associated outputs.
      */
     void begin();
 
     /**
-     * @brief Aktualisiert den Zustand aller registrierten logischen Funktionen.
-     *        Sollte in der Hauptschleife (loop) aufgerufen werden.
+     * @brief Updates the state of all registered logical functions.
+     *        Should be called in the main loop.
      */
     void update();
 
     /**
-     * @brief Setzt den Zustand einer F-Taste (gedrückt/nicht gedrückt).
-     * @param function_key Die Nummer der F-Taste (0-28).
-     * @param state Der Zustand (true für an, false für aus).
+     * @brief Sets the state of a function key (pressed/not pressed).
+     * @param function_key The number of the function key (0-28).
+     * @param state The state (true for on, false for off).
      */
     void setFunctionKeyState(uint8_t function_key, bool state);
 
     /**
-     * @brief Setzt die aktuelle Fahrtrichtung des Decoders.
-     * @param forward True für Vorwärtsfahrt, false für Rückwärtsfahrt.
+     * @brief Sets the current direction of the decoder.
+     * @param forward True for forward, false for reverse.
      */
     void setDirection(bool forward);
 

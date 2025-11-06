@@ -36,37 +36,12 @@
 #define MOTOR_BEMF_B_PIN A2
 
 // =====================================================================================
-// Konfiguration der Funktionsausgänge (Licht & AUX)
+// Licht-Konfiguration
 // =====================================================================================
-// Dieses neue System ersetzt die alte, statische Licht-Konfiguration.
-// Es ermöglicht eine flexible Zuweisung von Funktionen (z.B. Licht, Rauch)
-// zu Ausgängen und deren Steuerung über F-Tasten.
-
-// Schritt 1: Definieren Sie die physischen Ausgangspins, die Sie verwenden möchten.
-#define FUNC_PHYSICAL_PIN_0 26 // z.B. Licht vorne
-#define FUNC_PHYSICAL_PIN_1 27 // z.B. Licht hinten
-// #define FUNC_PHYSICAL_PIN_2 28 // z.B. Führerstandsbeleuchtung
-
-// Schritt 2: Konfigurieren Sie die "Logischen Funktionen".
-// Jede logische Funktion kombiniert einen physischen Pin mit einem Verhalten (Effekt)
-// und mappt dies auf eine F-Taste und optional auf die Fahrtrichtung.
-
-// --- Logische Funktion 0 (z.B. Licht Vorne) ---
-#define LOGICAL_FUNC_0_TYPE         STEADY // Effekt-Typ (STEADY oder DIMMING)
-#define LOGICAL_FUNC_0_OUTPUT_PIN   FUNC_PHYSICAL_PIN_0 // Welcher Pin wird angesteuert?
-#define LOGICAL_FUNC_0_MAPPED_KEY   0      // Welche F-Taste steuert die Funktion? (F0)
-#define LOGICAL_FUNC_0_DIRECTION    1      // Richtungsabhängigkeit: 1=Vorwärts, -1=Rückwärts, 0=Immer an
-#define LOGICAL_FUNC_0_PARAM_1      255    // Parameter 1 (z.B. Helligkeit für STEADY)
-
-// --- Logische Funktion 1 (z.B. Licht Hinten) ---
-#define LOGICAL_FUNC_1_TYPE         STEADY
-#define LOGICAL_FUNC_1_OUTPUT_PIN   FUNC_PHYSICAL_PIN_1
-#define LOGICAL_FUNC_1_MAPPED_KEY   0
-#define LOGICAL_FUNC_1_DIRECTION    -1
-#define LOGICAL_FUNC_1_PARAM_1      255
-
-// Um eine weitere Funktion hinzuzufügen, kopieren Sie einfach einen Block und
-// erhöhen die Ziffer (z.B. LOGICAL_FUNC_2_...).
+// Definieren Sie hier die Pins für die richtungsabhängige Beleuchtung.
+#define LIGHT_PIN_FWD 26 // Licht vorne
+#define LIGHT_PIN_REV 27 // Licht hinten
+#define LIGHT_BRIGHTNESS 255 // Helligkeit (0-255)
 
 
 // =====================================================================================

@@ -4,7 +4,7 @@
 EffectSteady::EffectSteady(uint8_t brightness) : brightness(brightness) {}
 
 void EffectSteady::update(uint32_t delta_ms) {
-    // Nichts zu tun, Helligkeit ist konstant
+    // Nothing to do, brightness is constant
 }
 
 uint8_t EffectSteady::getPwmValue() {
@@ -17,7 +17,7 @@ EffectDimming::EffectDimming(uint8_t brightness_full, uint8_t brightness_dimmed)
     : brightness_full(brightness_full), brightness_dimmed(brightness_dimmed) {}
 
 void EffectDimming::update(uint32_t delta_ms) {
-    // Nichts zu tun, Helligkeit ist zustandsabhängig
+    // Nothing to do, brightness is state-dependent
 }
 
 uint8_t EffectDimming::getPwmValue() {
@@ -92,9 +92,9 @@ void FunctionManager::registerFunction(uint8_t function_key, PhysicalOutput* out
 }
 
 void FunctionManager::begin() {
-    // Diese Funktion könnte verwendet werden, um alle PhysicalOutputs zu initialisieren,
-    // aber die `begin`-Methode von PhysicalOutput wird derzeit direkt aufgerufen.
-    // Vorerst leer lassen.
+    // This function could be used to initialize all PhysicalOutputs,
+    // but the `begin` method of PhysicalOutput is currently called directly.
+    // Leave empty for now.
 }
 
 void FunctionManager::update() {
@@ -102,7 +102,7 @@ void FunctionManager::update() {
         for (auto mapping : function_map[i]) {
             bool is_active = mapping->key_state;
 
-            // Richtungsabhängigkeit prüfen
+            // Check direction dependency
             if (mapping->direction_dependency != 0) {
                 if (mapping->direction_dependency == 1 && !current_direction_is_forward) {
                     is_active = false;

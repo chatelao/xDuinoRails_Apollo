@@ -111,7 +111,7 @@ void test_multiple_functions_on_same_key(void) {
 // Verifies the full direction-dependent headlight scenario, including switching between forward and reverse.
 void test_headlight_scenario(void) {
     // F0 controls front and rear lights based on direction
-    fm->registerFunction(0, out1, effect1, 1);  // F0 -> Front Light (Pin 26), FWD
+    fm->registerFunction(0, out1, new EffectSteady(255), 1);  // F0 -> Front Light (Pin 26), FWD
     fm->registerFunction(0, out2, new EffectSteady(200), -1); // F0 -> Rear Light (Pin 27), REV
 
     fm->setFunctionKeyState(0, true);
