@@ -62,3 +62,18 @@ Ziel dieser Phase ist es, einen Decoder zu erstellen, der eine Lok mit dem Märk
     - [ ] Entwicklung eines PC-basierten Konfigurationstools zur Vereinfachung der CV-Programmierung.
     - [ ] Erstellung einer umfassenden Benutzerdokumentation für alle Funktionen.
     - [ ] Verfeinerung und Optimierung des Codes basierend auf Community-Feedback.
+
+## Phase 4: Implementierung des Sound-Systems
+
+- [ ] **1. Kern-Audio-Infrastruktur**
+    - [ ] Implementierung der grundlegenden Hardware-Treiber (I2S, DMA) und eines WAV-Readers.
+    - [ ] Erstellung eines einfachen Prototyps, der einen einzelnen Sound per Funktionstaste abspielen kann.
+- [ ] **2. Polyphonie & Prime Mover**
+    - [ ] Implementierung eines Software-Mixers für die gleichzeitige Wiedergabe mehrerer Sounds (Polyphonie).
+    - [ ] Implementierung eines dynamischen `PRIME_MOVER`-Sounds für Diesel-Lokomotiven.
+- [ ] **3. Erweitertes Mapping & Spezial-Lokomotiven**
+    - [ ] Implementierung der vollständigen Tabellenlogik für das flexible Sound-Mapping.
+    - [ ] Implementierung der `PRIME_MOVER`-Logik für Dampf- (mit BEMF-Synchronisation) und Elektro-Lokomotiven.
+- [ ] **4. Werkzeuge & "Sound-Font"-Verwaltung**
+    - [ ] Entwicklung eines PC-basierten Tools zur Erstellung und Verwaltung von "Sound-Fonts" (Sound-Pakete).
+    - [ ] Erstellung einer umfassenden Benutzerdokumentation.
