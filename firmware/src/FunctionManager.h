@@ -2,6 +2,7 @@
 #define FUNCTION_MANAGER_H
 
 #include <Arduino.h>
+#include <vector>
 
 // --- Core Effect Classes ---
 
@@ -143,7 +144,7 @@ private:
         bool key_state;
     };
 
-    FunctionMapping* function_map[MAX_LOGICAL_FUNCTIONS];
+    std::vector<FunctionMapping*> function_map[MAX_LOGICAL_FUNCTIONS];
     bool current_direction_is_forward = true;
 };
 

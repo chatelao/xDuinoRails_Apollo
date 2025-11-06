@@ -36,6 +36,7 @@ PhysicalOutput::PhysicalOutput(uint8_t pin) : pin(pin) {}
 void PhysicalOutput::begin() {
     pinMode(pin, OUTPUT);
     analogWrite(pin, 0);
+    last_value = 0;
 }
 
 void PhysicalOutput::write(uint8_t value) {
@@ -70,16 +71,14 @@ void LogicalFunction::setActive(bool active) {
 
 // --- FunctionManager ---
 FunctionManager::FunctionManager() {
-    for (int i = 0; i < MAX_LOGICAL_FUNCTIONS; ++i) {
-        function_map[i] = nullptr;
-    }
+    // The vector is empty by default, no need to initialize
 }
 
 FunctionManager::~FunctionManager() {
     for (int i = 0; i < MAX_LOGICAL_FUNCTIONS; ++i) {
-        if (function_map[i]) {
-            delete function_map[i]->logical_function;
-            delete function_map[i];
+        for (auto mapping : function_map[i]) {
+            delete mapping->logical_function;
+            delete mapping;
         }
     }
 }
@@ -87,15 +86,9 @@ FunctionManager::~FunctionManager() {
 void FunctionManager::registerFunction(uint8_t function_key, PhysicalOutput* output, LightEffect* effect, int8_t direction_dependency) {
     if (function_key >= MAX_LOGICAL_FUNCTIONS) return;
 
-    // Falls bereits eine Funktion für diesen Key existiert, wird sie zuerst gelöscht
-    if (function_map[function_key]) {
-        delete function_map[function_key]->logical_function;
-        delete function_map[function_key];
-    }
-
     LogicalFunction* lf = new LogicalFunction(output, effect);
     FunctionMapping* mapping = new FunctionMapping{lf, direction_dependency, false};
-    function_map[function_key] = mapping;
+    function_map[function_key].push_back(mapping);
 }
 
 void FunctionManager::begin() {
@@ -106,8 +99,7 @@ void FunctionManager::begin() {
 
 void FunctionManager::update() {
     for (int i = 0; i < MAX_LOGICAL_FUNCTIONS; ++i) {
-        if (function_map[i]) {
-            FunctionMapping* mapping = function_map[i];
+        for (auto mapping : function_map[i]) {
             bool is_active = mapping->key_state;
 
             // Richtungsabhängigkeit prüfen
@@ -126,8 +118,10 @@ void FunctionManager::update() {
 }
 
 void FunctionManager::setFunctionKeyState(uint8_t function_key, bool state) {
-    if (function_key < MAX_LOGICAL_FUNCTIONS && function_map[function_key]) {
-        function_map[function_key]->key_state = state;
+    if (function_key < MAX_LOGICAL_FUNCTIONS) {
+        for (auto mapping : function_map[function_key]) {
+            mapping->key_state = state;
+        }
     }
 }
 
