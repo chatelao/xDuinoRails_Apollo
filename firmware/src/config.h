@@ -73,12 +73,50 @@
 #define MOTOR_BEMF_B_PIN A2
 
 // =====================================================================================
-// Licht-Konfiguration
+// Funktions- & Ausgangs-Konfiguration (Function Mapping)
 // =====================================================================================
-// Definieren Sie hier die Pins für die richtungsabhängige Beleuchtung.
-#define LIGHT_PIN_FWD 26 // Licht vorne
-#define LIGHT_PIN_REV 27 // Licht hinten
-#define LIGHT_BRIGHTNESS 255 // Helligkeit (0-255)
+// In diesem Abschnitt wird die gesamte Konfiguration der Licht- und Sonderfunktionen
+// vorgenommen. Das System ist in drei Stufen aufgebaut:
+//
+// 1. Physische Ausgänge (Physical Outputs):
+//    Definieren Sie hier alle Hardware-Pins, die als Ausgänge verwendet werden sollen.
+//
+// 2. Logische Funktionen (Logical Functions):
+//    Eine logische Funktion ist eine Eigenschaft der Lok (z.B. "Stirnlicht vorne").
+//    Jeder logischen Funktion wird ein Licht-Effekt (z.B. "Dauerlicht") und
+//    mindestens ein physischer Ausgang zugewiesen.
+//
+// 3. Mapping:
+//    Hier wird festgelegt, welche Taste auf der Zentrale (z.B. F0) welche
+//    logische Funktion steuert.
+//
+// HINWEIS FÜR PHASE 1: Das Mapping ist noch direkt. F0 steuert die erste
+// definierte logische Funktion, F1 die zweite, und so weiter.
+// =====================================================================================
+
+// --- 1. Physische Ausgänge definieren ---
+// Jeder Ausgang erhält einen eindeutigen Namen und eine Pin-Nummer.
+#define PO_HEADLIGHT_FWD 26 // Stirnlicht vorne
+#define PO_HEADLIGHT_REV 27 // Stirnlicht hinten
+#define PO_CABIN_LIGHT 28   // Führerstandsbeleuchtung (Beispiel)
+
+// --- 2. Logische Funktionen und Effekte definieren ---
+// Hier wird die Setup-Logik für den FunctionManager vorbereitet.
+// Dies geschieht in der `setup()`-Funktion in `main.cpp`.
+//
+// Beispiel-Konfiguration:
+// - F0: Richtungsabhängiges Stirnlicht (noch nicht implementiert, für Phase 1 nur einfaches An/Aus)
+// - F1: Führerstandsbeleuchtung an/aus
+//
+// WICHTIG: Die Reihenfolge der Aufrufe von `functionManager.addLogicalFunction`
+// in `main.cpp` bestimmt das Mapping:
+// - Der erste Aufruf wird von F0 gesteuert.
+// - Der zweite Aufruf wird von F1 gesteuert.
+// - usw.
+
+// Helligkeits-Definitionen
+#define BRIGHTNESS_FULL 255
+#define BRIGHTNESS_DIMMED 80
 
 
 // =====================================================================================
