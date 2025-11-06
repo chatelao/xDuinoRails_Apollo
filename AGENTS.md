@@ -16,6 +16,7 @@ AGENTS.md
 Follow the most used file & code naming conventions in the project:
 - If not yet provided use “snake case”
 - Comment lines if magic numbers or complex operations are used
+- Add Doxygen comments
 
 # Testing
 Add a comment to each testcase
@@ -26,3 +27,4 @@ Add a comment to each testcase
 # Add the following GitHub actions:
 - Build and test the software after every push on every branch
 - Provide all firmware examples with every release as assets
+- Generate the Doxygen documents during build and provide the with the release assets
