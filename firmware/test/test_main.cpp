@@ -28,7 +28,13 @@ public:
 #include "LightEffect.cpp"
 #include "PhysicalOutput.cpp"
 #include "LogicalFunction.cpp"
+// FunctionManager depends on FunctionMapping, so include it first.
+#include "FunctionMapping.cpp"
 #include "FunctionManager.cpp"
+// CV related classes are last as they depend on the others.
+#include "CVManager.cpp"
+#include "PhysicalOutputManager.cpp"
+#include "CVLoader.cpp"
 
 
 // =====================================================================================
@@ -100,17 +106,70 @@ void test_logical_function_activation() {
 }
 
 /**
- * @brief Test that the manager correctly maps F-keys to functions.
+ * @brief Test the strobe effect timing.
  */
-void test_manager_direct_mapping() {
+void test_effect_strobe() {
+    // 10Hz strobe with 25% duty cycle = 100ms period, 25ms on time.
+    EffectStrobe effect(10, 25, 255);
+    effect.setActive(true);
+
+    effect.update(10); // t=10ms
+    TEST_ASSERT_EQUAL(255, effect.getPwmValue());
+    effect.update(15); // t=25ms
+    TEST_ASSERT_EQUAL(0, effect.getPwmValue());
+    effect.update(75); // t=100ms
+    TEST_ASSERT_EQUAL(255, effect.getPwmValue());
+}
+
+/**
+ * @brief Test the soft start/stop fade timing.
+ */
+void test_effect_soft_start_stop() {
+    // 100ms fade in, 50ms fade out, target 200.
+    EffectSoftStartStop effect(100, 50, 200);
+
+    // Test fade in
+    effect.setActive(true);
+    effect.update(50); // Halfway through fade in
+    TEST_ASSERT_EQUAL(100, effect.getPwmValue());
+    effect.update(50); // Fully faded in
+    TEST_ASSERT_EQUAL(200, effect.getPwmValue());
+
+    // Test fade out
+    effect.setActive(false);
+    effect.update(25); // Halfway through fade out
+    TEST_ASSERT_EQUAL(100, effect.getPwmValue());
+    effect.update(25); // Fully faded out
+    TEST_ASSERT_EQUAL(0, effect.getPwmValue());
+}
+
+/**
+ * @brief Test a simple mapping rule in the FunctionManager.
+ */
+void test_manager_mapping_rule() {
     FunctionManager manager;
     manager.addLogicalFunction(new LogicalFunction(new MockEffect()));
-    manager.setFunctionState(0, true);
+
+    // Rule: F1 ON -> Activate Logical Function 0
+    ConditionVariable cv;
+    cv.id = 1;
+    cv.conditions.push_back({TriggerSource::FUNC_KEY, 1, TriggerComparator::IS_ON});
+    manager.addConditionVariable(cv);
+
+    MappingRule rule;
+    rule.target_logical_function_id = 0;
+    rule.positive_conditions.push_back(1);
+    rule.action = MappingAction::TURN_ON;
+    manager.addMappingRule(rule);
+
+    // Initial state: F1 is off, effect should be off.
+    manager.update(DELTA_MS);
+    TEST_ASSERT_FALSE(effect_is_active);
+
+    // Turn F1 on, update, effect should now be on.
+    manager.setFunctionState(1, true);
+    manager.update(DELTA_MS);
     TEST_ASSERT_TRUE(effect_is_active);
-    manager.setFunctionState(0, false);
-    TEST_ASSERT_FALSE(effect_is_active);
-    manager.setFunctionState(5, true);
-    TEST_ASSERT_FALSE(effect_is_active);
 }
 
 
@@ -126,7 +185,9 @@ void setup() {
     RUN_TEST(test_effect_steady);
     RUN_TEST(test_effect_dimming);
     RUN_TEST(test_logical_function_activation);
-    RUN_TEST(test_manager_direct_mapping);
+    RUN_TEST(test_effect_strobe);
+    RUN_TEST(test_effect_soft_start_stop);
+    RUN_TEST(test_manager_mapping_rule);
 
     UNITY_END();
 }
