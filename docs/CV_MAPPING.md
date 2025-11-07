@@ -33,3 +33,33 @@ Die Struktur orientiert sich an gängigen Industriestandards (z.B. ESU, ZIMO), u
 *   **Hersteller-ID (CV 8):** Der Wert `165` ist im NMRA-Verzeichnis für "DIY and home-built decoders" reserviert und wird in der Firmware bereits verwendet.
 *   **Erweiterte Adressen (CV 17/18):** Die Implementierung erfordert die Auswertung von CV 29, um zwischen kurzer und langer Adresse umzuschalten.
 *   **Funktionsausgänge (CV 49/50):** Die Planung für ein erweitertes "Function Mapping" ist im `light_and_aux_concept.md` vorgesehen. Die CVs sind hier als Platzhalter reserviert.
+
+---
+
+## Konfiguration der Logischen Funktionen (CV 200-455)
+
+Die logischen Funktionen werden in Blöcken von 8 CVs konfiguriert, beginnend bei CV 200. Jeder Block definiert eine Funktion, deren Effekt und die zugehörigen physischen Ausgänge.
+
+| CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
+|---------------------|------|--------------|--------------|
+| **Base + 0** | **Effekt-Typ** | Definiert das Verhalten der Funktion. | 0-255 |
+| Base + 1 | Parameter 1 | Erster Parameter für den gewählten Effekt. | 0-255 |
+| Base + 2 | Parameter 2 | Zweiter Parameter für den gewählten Effekt. | 0-255 |
+| Base + 3 | Parameter 3 | Dritter Parameter für den gewählten Effekt. | 0-255 |
+| Base + 4 | Physischer Ausgang 1 ID | ID des ersten zugeordneten Ausgangs (0-basiert). | 0-255 |
+| Base + 5 | Physischer Ausgang 2 ID | ID des zweiten Ausgangs (z.B. für Rauchgenerator-Lüfter). | 0-255 |
+| Base + 6 | (Reserviert) | | |
+| Base + 7 | (Reserviert) | | |
+
+### Effekt-Typen und ihre Parameter
+
+| Typ-ID | Effekt | Parameter 1 | Parameter 2 | Parameter 3 |
+|--------|--------|---------------|---------------|---------------|
+| 1 | **Dauerlicht** (Steady) | Helligkeit | - | - |
+| 2 | **Dimmen** (Dimming) | Helligkeit (voll) | Helligkeit (gedimmt) | - |
+| 3 | **Flackern** (Flicker) | Basish Helligkeit | Flackertiefe | Flackergeschwindigkeit |
+| 4 | **Stroboskop** (Strobe) | Frequenz (Hz) | Einschaltdauer (%) | Helligkeit |
+| 5 | **Mars Light** | Frequenz (mHz) | Spitzenhelligkeit | Phasenverschiebung (%) |
+| 6 | **Sanftes Ein-/Ausschalten** | Einblendzeit (ms/2) | Ausblendzeit (ms/2) | Ziel-Helligkeit |
+| 7 | **Servo** | Endpunkt A (Grad) | Endpunkt B (Grad) | Bewegungsgeschwindigkeit |
+| 8 | **Rauchgenerator** | Heizung an/aus (0/1) | Lüftergeschwindigkeit | - |

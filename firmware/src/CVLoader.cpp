@@ -1,7 +1,7 @@
 #include "CVLoader.h"
 #include "CVManager.h"
 #include "FunctionManager.h"
-#include "LightEffect.h"
+#include "Effect.h"
 #include "PhysicalOutputManager.h"
 #include "LogicalFunction.h"
 
@@ -32,7 +32,7 @@ void CVLoader::loadLogicalFunctions(CVManager& cvManager, FunctionManager& funct
         uint8_t param3 = cvManager.readCV(base_cv + 3);
         uint8_t physical_output_id = cvManager.readCV(base_cv + 4);
 
-        LightEffect* effect = nullptr;
+        Effect* effect = nullptr;
         switch (effect_type) {
             case 1: effect = new EffectSteady(param1); break;
             case 2: effect = new EffectDimming(param1, param2); break;
@@ -40,13 +40,24 @@ void CVLoader::loadLogicalFunctions(CVManager& cvManager, FunctionManager& funct
             case 4: effect = new EffectStrobe(param1, param2, param3); break;
             case 5: effect = new EffectMarsLight(param1, param2, param3); break;
             case 6: effect = new EffectSoftStartStop(param1, param2, param3); break;
+            case 7: effect = new EffectServo(param1, param2, param3); break;
+            case 8: effect = new EffectSmokeGenerator(param1, param2); break;
             default: effect = new EffectSteady(0); break;
         }
 
-        PhysicalOutput* output = physicalOutputManager.getOutputById(physical_output_id);
         LogicalFunction* lf = new LogicalFunction(effect);
-        if (output != nullptr) {
-            lf->addOutput(output);
+        if (effect_type == 8) {
+            // Smoke generator has two outputs
+            uint8_t fan_output_id = cvManager.readCV(base_cv + 5);
+            PhysicalOutput* heater_output = physicalOutputManager.getOutputById(physical_output_id);
+            PhysicalOutput* fan_output = physicalOutputManager.getOutputById(fan_output_id);
+            if (heater_output != nullptr) lf->addOutput(heater_output);
+            if (fan_output != nullptr) lf->addOutput(fan_output);
+        } else {
+            PhysicalOutput* output = physicalOutputManager.getOutputById(physical_output_id);
+            if (output != nullptr) {
+                lf->addOutput(output);
+            }
         }
         functionManager.addLogicalFunction(lf);
     }

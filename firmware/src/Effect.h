@@ -1,22 +1,24 @@
-#ifndef LIGHT_EFFECT_H
-#define LIGHT_EFFECT_H
+#ifndef EFFECT_H
+#define EFFECT_H
 
 #include <Arduino.h>
+#include <vector>
+#include "PhysicalOutput.h"
 
 /**
- * @file LightEffect.h
- * @brief Base class for lighting effects and simple effect implementations.
+ * @file Effect.h
+ * @brief Base class for all logical effects (lighting, servo, etc.).
  */
 
 // --- Base Class ---
 
-class LightEffect {
+class Effect {
 public:
-    virtual ~LightEffect() {}
-    virtual void update(uint32_t delta_ms) = 0;
-    virtual uint8_t getPwmValue() = 0;
+    virtual ~Effect() {}
+    virtual void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) = 0;
     virtual void setActive(bool active) { _is_active = active; }
     virtual bool isActive() { return _is_active; }
+    virtual void setDimmed(bool dimmed) {}
 
 protected:
     bool _is_active = false;
@@ -28,11 +30,10 @@ protected:
  * @class EffectSteady
  * @brief A simple, steady light effect with a fixed brightness.
  */
-class EffectSteady : public LightEffect {
+class EffectSteady : public Effect {
 public:
     EffectSteady(uint8_t brightness) : _brightness(brightness) {}
-    void update(uint32_t delta_ms) override;
-    uint8_t getPwmValue() override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
 
 private:
     uint8_t _brightness;
@@ -41,14 +42,12 @@ private:
 /**
  * @class EffectDimming
  * @brief A light effect that can be dimmed between two brightness levels.
- * @note For Phase 1, this will just toggle between full and dimmed.
  */
-class EffectDimming : public LightEffect {
+class EffectDimming : public Effect {
 public:
     EffectDimming(uint8_t brightness_full, uint8_t brightness_dimmed);
-    void update(uint32_t delta_ms) override;
-    uint8_t getPwmValue() override;
-    void setDimmed(bool dimmed);
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void setDimmed(bool dimmed) override;
 
 private:
     uint8_t _brightness_full;
@@ -62,11 +61,10 @@ private:
  * @class EffectFlicker
  * @brief Simulates the flickering of a firebox or lantern using Perlin noise.
  */
-class EffectFlicker : public LightEffect {
+class EffectFlicker : public Effect {
 public:
     EffectFlicker(uint8_t base_brightness, uint8_t flicker_depth, uint8_t flicker_speed);
-    void update(uint32_t delta_ms) override;
-    uint8_t getPwmValue() override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
 
 private:
     uint8_t _base_brightness;
@@ -80,11 +78,10 @@ private:
  * @class EffectStrobe
  * @brief Simulates a strobe or beacon light.
  */
-class EffectStrobe : public LightEffect {
+class EffectStrobe : public Effect {
 public:
     EffectStrobe(uint16_t strobe_frequency_hz, uint8_t duty_cycle_percent, uint8_t brightness);
-    void update(uint32_t delta_ms) override;
-    uint8_t getPwmValue() override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
     void setActive(bool active) override;
 
 private:
@@ -98,11 +95,10 @@ private:
  * @class EffectMarsLight
  * @brief Simulates an oscillating Mars Light or Gyralite using a sine wave.
  */
-class EffectMarsLight : public LightEffect {
+class EffectMarsLight : public Effect {
 public:
     EffectMarsLight(uint16_t oscillation_frequency_mhz, uint8_t peak_brightness, int8_t phase_shift_percent);
-    void update(uint32_t delta_ms) override;
-    uint8_t getPwmValue() override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
 
 private:
     float _oscillation_period_ms;
@@ -115,11 +111,10 @@ private:
  * @class EffectSoftStartStop
  * @brief Fades the light in and out smoothly.
  */
-class EffectSoftStartStop : public LightEffect {
+class EffectSoftStartStop : public Effect {
 public:
     EffectSoftStartStop(uint16_t fade_in_time_ms, uint16_t fade_out_time_ms, uint8_t target_brightness);
-    void update(uint32_t delta_ms) override;
-    uint8_t getPwmValue() override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
     void setActive(bool active) override;
 
 private:
@@ -129,4 +124,39 @@ private:
     float _current_brightness;
 };
 
-#endif // LIGHT_EFFECT_H
+// --- Phase 3 Implementations ---
+
+/**
+ * @class EffectServo
+ * @brief Controls a servo motor, moving it between two endpoints.
+ */
+class EffectServo : public Effect {
+public:
+    EffectServo(uint8_t endpoint_a, uint8_t endpoint_b, uint8_t travel_speed);
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void setActive(bool active) override;
+
+private:
+    uint8_t _endpoint_a;
+    uint8_t _endpoint_b;
+    float _speed; // degrees per ms
+    float _current_angle;
+    float _target_angle;
+    bool _is_at_a = true;
+};
+
+/**
+ * @class EffectSmokeGenerator
+ * @brief Controls a smoke generator with a heater and a fan.
+ */
+class EffectSmokeGenerator : public Effect {
+public:
+    EffectSmokeGenerator(bool heater_enabled, uint8_t fan_speed);
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+
+private:
+    bool _heater_enabled;
+    uint8_t _fan_speed;
+};
+
+#endif // EFFECT_H
