@@ -17,6 +17,19 @@
 #define CV_BASE_COND_VARS          500 // Block for Condition Variables (32 CVs * 4 CVs/var = 128 CVs)
 #define CV_BASE_MAPPING_RULES      700 // Block for Mapping Rules (64 rules * 4 CVs/rule = 256 CVs)
 
+// CVs for Servo and Smoke Generator effects are integrated into the Logical Functions block.
+// The first CV of a logical function defines its type.
+//
+// Effect Type 7: Servo
+// Param1 (CV+1): Endpoint A (degrees)
+// Param2 (CV+2): Endpoint B (degrees)
+// Param3 (CV+3): Travel Speed
+//
+// Effect Type 8: Smoke Generator
+// Param1 (CV+1): Heater Enable (0 or 1)
+// Param2 (CV+2): Fan Speed (0-255)
+// Param3 (CV+3): Unused
+
 // --- CVManager Class ---
 
 class CVManager {

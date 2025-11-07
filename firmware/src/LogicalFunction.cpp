@@ -5,7 +5,7 @@
  * @brief Implementation for the LogicalFunction class.
  */
 
-LogicalFunction::LogicalFunction(LightEffect* effect) : _effect(effect) {
+LogicalFunction::LogicalFunction(Effect* effect) : _effect(effect) {
     // The LogicalFunction takes ownership of the effect pointer.
 }
 
@@ -23,12 +23,16 @@ void LogicalFunction::setActive(bool active) {
     }
 }
 
+bool LogicalFunction::isActive() const {
+    if (_effect) {
+        return _effect->isActive();
+    }
+    return false;
+}
+
 void LogicalFunction::setDimmed(bool dimmed) {
     if (_effect) {
-        // Use dynamic_cast to safely check if the effect is an EffectDimming
-        if (EffectDimming* dimmable_effect = dynamic_cast<EffectDimming*>(_effect)) {
-            dimmable_effect->setDimmed(dimmed);
-        }
+        _effect->setDimmed(dimmed);
     }
 }
 
@@ -37,10 +41,5 @@ void LogicalFunction::update(uint32_t delta_ms) {
         return;
     }
 
-    _effect->update(delta_ms);
-    uint8_t pwmValue = _effect->getPwmValue();
-
-    for (auto& output : _outputs) {
-        output->setValue(pwmValue);
-    }
+    _effect->update(delta_ms, _outputs);
 }

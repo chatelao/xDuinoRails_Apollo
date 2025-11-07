@@ -99,6 +99,7 @@
 #define PO_HEADLIGHT_FWD 26 // Stirnlicht vorne
 #define PO_HEADLIGHT_REV 27 // Stirnlicht hinten
 #define PO_CABIN_LIGHT 28   // Führerstandsbeleuchtung (Beispiel)
+#define PO_SERVO_1 29       // Servo 1 (Beispiel)
 
 // --- 2. Logische Funktionen und Effekte definieren ---
 // Hier wird die Setup-Logik für den FunctionManager vorbereitet.

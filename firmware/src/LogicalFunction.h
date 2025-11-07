@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "PhysicalOutput.h"
-#include "LightEffect.h"
+#include "Effect.h"
 
 /**
  * @file LogicalFunction.h
@@ -15,9 +15,9 @@ class LogicalFunction {
 public:
     /**
      * @brief Construct a new Logical Function object.
-     * @param effect Pointer to the LightEffect to use. The LogicalFunction takes ownership.
+     * @param effect Pointer to the Effect to use. The LogicalFunction takes ownership.
      */
-    LogicalFunction(LightEffect* effect);
+    LogicalFunction(Effect* effect);
     ~LogicalFunction();
 
     /**
@@ -37,6 +37,7 @@ public:
      * @param active True to activate, false to deactivate.
      */
     void setActive(bool active);
+    bool isActive() const;
 
     /**
      * @brief Set the dimmed state of the function's effect.
@@ -45,7 +46,7 @@ public:
     void setDimmed(bool dimmed);
 
 private:
-    LightEffect* _effect;
+    Effect* _effect;
     std::vector<PhysicalOutput*> _outputs;
 };
 

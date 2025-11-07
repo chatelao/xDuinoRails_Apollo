@@ -52,7 +52,7 @@ private:
     bool _function_states[MAX_DCC_FUNCTIONS] = {false};
     DecoderDirection _direction = DECODER_DIRECTION_FORWARD;
     uint16_t _speed = 0;
-    std.map<uint8_t, bool> _cv_states; // Cache for evaluated ConditionVariable states
+    std::map<uint8_t, bool> _cv_states; // Cache for evaluated ConditionVariable states
     bool _state_changed = true; // Flag to trigger re-evaluation
 };
 
