@@ -32,7 +32,7 @@ Die Struktur orientiert sich an gängigen Industriestandards (z.B. ESU, ZIMO), u
 *   **Beschleunigungs-/Bremszeit (CV 3/4):** Die aktuellen Werte in `config.h` sind `50` und `100` (Einheit: `PPS^2`). Um dies auf den NMRA-Standard (Wert * 0.25s) abzubilden, müssen die Werte in der Firmware umgerechnet werden. Die Standardwerte in der Tabelle (`20` und `40`) sind Annäherungen und können angepasst werden.
 *   **Hersteller-ID (CV 8):** Der Wert `165` ist im NMRA-Verzeichnis für "DIY and home-built decoders" reserviert und wird in der Firmware bereits verwendet.
 *   **Erweiterte Adressen (CV 17/18):** Die Implementierung erfordert die Auswertung von CV 29, um zwischen kurzer und langer Adresse umzuschalten.
-*   **Funktionsausgänge (CV 49/50):** Die Planung für ein erweitertes "Function Mapping" ist im `light_and_aux_concept.md` vorgesehen. Die CVs sind hier als Platzhalter reserviert.
+*   **Funktionsausgänge (CV 49/50):** Die Planung für ein erweitertes "Function Mapping" ist im `LIGHT_AND_AUX_CONCEPT.MD` vorgesehen. Die CVs sind hier als Platzhalter reserviert.
 
 ---
 
