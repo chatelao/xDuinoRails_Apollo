@@ -90,22 +90,16 @@ void FunctionManager::evaluateMapping() {
             if (rule.target_logical_function_id < _logical_functions.size()) {
                 LogicalFunction* target_func = _logical_functions[rule.target_logical_function_id];
                 switch (rule.action) {
-                    case MappingAction::TURN_ON:
+                    case MappingAction::ACTIVATE:
                         target_func->setActive(true);
                         break;
-                    case MappingAction::TURN_OFF:
+                    case MappingAction::DEACTIVATE:
                         target_func->setActive(false);
                         break;
-                    case MappingAction::TOGGLE:
-                        target_func->setActive(!target_func->isActive());
+                    case MappingAction::SET_DIMMED:
+                        target_func->setDimmed(!target_func->isDimmed());
                         break;
-                    case MappingAction::SET_DIMMED_ON:
-                        // This requires the target function to have a dimmable effect.
-                        // A more robust implementation would use dynamic_cast or a capability flag.
-                        target_func->setDimmed(true);
-                        break;
-                    case MappingAction::SET_DIMMED_OFF:
-                        target_func->setDimmed(false);
+                    default:
                         break;
                 }
             }

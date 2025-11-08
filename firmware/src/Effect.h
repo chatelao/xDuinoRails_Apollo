@@ -17,8 +17,9 @@ public:
     virtual ~Effect() {}
     virtual void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) = 0;
     virtual void setActive(bool active) { _is_active = active; }
-    virtual bool isActive() { return _is_active; }
+    virtual bool isActive() const { return _is_active; }
     virtual void setDimmed(bool dimmed) {}
+    virtual bool isDimmed() const { return false; }
 
 protected:
     bool _is_active = false;
@@ -48,6 +49,7 @@ public:
     EffectDimming(uint8_t brightness_full, uint8_t brightness_dimmed);
     void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
     void setDimmed(bool dimmed) override;
+    bool isDimmed() const override { return _is_dimmed; }
 
 private:
     uint8_t _brightness_full;
