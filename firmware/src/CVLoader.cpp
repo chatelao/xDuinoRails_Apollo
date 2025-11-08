@@ -1,98 +1,93 @@
 #include "CVLoader.h"
+#include "cv_definitions.h"
 #include "CVManager.h"
 #include "FunctionManager.h"
 #include "Effect.h"
 #include "PhysicalOutputManager.h"
 #include "LogicalFunction.h"
 
-// Define the size of each configuration block
-#define MAX_LOGICAL_FUNCTIONS 32
-#define MAX_CONDITION_VARIABLES 32
-#define MAX_MAPPING_RULES 64
-
-#define CV_LOGICAL_FUNCTION_SIZE 8
-#define CV_CONDITION_VARIABLE_SIZE 4
-#define CV_MAPPING_RULE_SIZE 4
-
 void CVLoader::loadCvToFunctionManager(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager) {
-    loadLogicalFunctions(cvManager, functionManager, physicalOutputManager);
-    loadConditionVariables(cvManager, functionManager);
-    loadMappingRules(cvManager, functionManager);
-}
+    // Clear any existing configuration from a previous load
+    functionManager.reset();
 
-void CVLoader::loadLogicalFunctions(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager) {
-    for (int i = 0; i < MAX_LOGICAL_FUNCTIONS; ++i) {
-        uint16_t base_cv = CV_BASE_LOGICAL_FUNCTIONS + (i * CV_LOGICAL_FUNCTION_SIZE);
-        uint8_t effect_type = cvManager.readCV(base_cv + 0);
+    uint8_t mapping_method = cvManager.readCV(CV_FUNCTION_MAPPING_METHOD);
 
-        if (effect_type == 0) continue; // Type 0 means unused / end of list
+    // Only load the RCN-225 mapping if CV 96 is set to 1
+    if (mapping_method != 1) {
+        return;
+    }
 
-        uint8_t param1 = cvManager.readCV(base_cv + 1);
-        uint8_t param2 = cvManager.readCV(base_cv + 2);
-        uint8_t param3 = cvManager.readCV(base_cv + 3);
-        uint8_t physical_output_id = cvManager.readCV(base_cv + 4);
+    // CVs 33-46 correspond to F0_fwd, F0_rev, F1, F2, ..., F12
+    const int num_mapping_cvs = CV_OUTPUT_LOCATION_CONFIG_END - CV_OUTPUT_LOCATION_CONFIG_START + 1;
 
-        Effect* effect = nullptr;
-        switch (effect_type) {
-            case 1: effect = new EffectSteady(param1); break;
-            case 2: effect = new EffectDimming(param1, param2); break;
-            case 3: effect = new EffectFlicker(param1, param2, param3); break;
-            case 4: effect = new EffectStrobe(param1, param2, param3); break;
-            case 5: effect = new EffectMarsLight(param1, param2, param3); break;
-            case 6: effect = new EffectSoftStartStop(param1, param2, param3); break;
-            case 7: effect = new EffectServo(param1, param2, param3); break;
-            case 8: effect = new EffectSmokeGenerator(param1, param2); break;
-            default: effect = new EffectSteady(0); break;
+    for (int i = 0; i < num_mapping_cvs; ++i) {
+        uint16_t cv_addr = CV_OUTPUT_LOCATION_CONFIG_START + i;
+        uint8_t mapping_mask = cvManager.readCV(cv_addr);
+
+        if (mapping_mask == 0) {
+            continue; // No outputs mapped for this function condition
         }
 
-        LogicalFunction* lf = new LogicalFunction(effect);
-        if (effect_type == 8) {
-            // Smoke generator has two outputs
-            uint8_t fan_output_id = cvManager.readCV(base_cv + 5);
-            PhysicalOutput* heater_output = physicalOutputManager.getOutputById(physical_output_id);
-            PhysicalOutput* fan_output = physicalOutputManager.getOutputById(fan_output_id);
-            if (heater_output != nullptr) lf->addOutput(heater_output);
-            if (fan_output != nullptr) lf->addOutput(fan_output);
-        } else {
-            PhysicalOutput* output = physicalOutputManager.getOutputById(physical_output_id);
-            if (output != nullptr) {
-                lf->addOutput(output);
+        // Create the ConditionVariable for this function trigger
+        ConditionVariable cv;
+        cv.id = i + 1; // Use a simple 1-based ID
+
+        if (i == 0) { // CV 33: F0 Forward
+            Condition dir_cond;
+            dir_cond.source = TriggerSource::DIRECTION;
+            dir_cond.comparator = TriggerComparator::EQ;
+            dir_cond.parameter = DECODER_DIRECTION_FORWARD;
+            cv.conditions.push_back(dir_cond);
+
+            Condition f0_cond;
+            f0_cond.source = TriggerSource::FUNC_KEY;
+            f0_cond.comparator = TriggerComparator::IS_TRUE;
+            f0_cond.parameter = 0; // F0
+            cv.conditions.push_back(f0_cond);
+
+        } else if (i == 1) { // CV 34: F0 Reverse
+            Condition dir_cond;
+            dir_cond.source = TriggerSource::DIRECTION;
+            dir_cond.comparator = TriggerComparator::EQ;
+            dir_cond.parameter = DECODER_DIRECTION_REVERSE;
+            cv.conditions.push_back(dir_cond);
+
+            Condition f0_cond;
+            f0_cond.source = TriggerSource::FUNC_KEY;
+            f0_cond.comparator = TriggerComparator::IS_TRUE;
+            f0_cond.parameter = 0; // F0
+            cv.conditions.push_back(f0_cond);
+
+        } else { // CVs 35-46: F1 - F12
+            Condition c;
+            c.source = TriggerSource::FUNC_KEY;
+            c.comparator = TriggerComparator::IS_TRUE;
+            c.parameter = i - 1; // CV 35 (i=2) is F1, CV 36 (i=3) is F2, etc.
+            cv.conditions.push_back(c);
+        }
+        functionManager.addConditionVariable(cv);
+
+        // For each bit set in the mask, create a LogicalFunction and a MappingRule
+        for (int output_bit = 0; output_bit < 8; ++output_bit) {
+            if ((mapping_mask >> output_bit) & 1) {
+                uint8_t physical_output_id = output_bit + 1; // RCN mapping is 1-based (bit 0 = output 1)
+
+                Effect* effect = new EffectSteady(255);
+                LogicalFunction* lf = new LogicalFunction(effect);
+
+                PhysicalOutput* output = physicalOutputManager.getOutputById(physical_output_id);
+                if (output != nullptr) {
+                    lf->addOutput(output);
+                }
+                functionManager.addLogicalFunction(lf);
+                uint8_t lf_idx = functionManager.getLogicalFunctionCount() - 1;
+
+                MappingRule rule;
+                rule.target_logical_function_id = lf_idx;
+                rule.positive_conditions.push_back(cv.id);
+                rule.action = MappingAction::ACTIVATE;
+                functionManager.addMappingRule(rule);
             }
         }
-        functionManager.addLogicalFunction(lf);
-    }
-}
-
-void CVLoader::loadConditionVariables(CVManager& cvManager, FunctionManager& functionManager) {
-    for (int i = 0; i < MAX_CONDITION_VARIABLES; ++i) {
-        uint16_t base_cv = CV_BASE_COND_VARS + (i * CV_CONDITION_VARIABLE_SIZE);
-        uint8_t source_type = cvManager.readCV(base_cv + 0);
-
-        if (source_type == 0) continue; // Type 0 means unused / end of list
-
-        ConditionVariable cv;
-        cv.id = i + 1; // IDs are 1-based
-        Condition c;
-        c.source = (TriggerSource)source_type;
-        c.comparator = (TriggerComparator)cvManager.readCV(base_cv + 1);
-        c.parameter = cvManager.readCV(base_cv + 2);
-        cv.conditions.push_back(c);
-        functionManager.addConditionVariable(cv);
-    }
-}
-
-void CVLoader::loadMappingRules(CVManager& cvManager, FunctionManager& functionManager) {
-    for (int i = 0; i < MAX_MAPPING_RULES; ++i) {
-        uint16_t base_cv = CV_BASE_MAPPING_RULES + (i * CV_MAPPING_RULE_SIZE);
-        uint8_t target_lf_id = cvManager.readCV(base_cv + 0);
-
-        if (target_lf_id == 0) continue; // Target 0 means unused / end of list
-
-        MappingRule rule;
-        rule.target_logical_function_id = target_lf_id - 1; // CV is 1-based, index is 0-based
-        rule.positive_conditions.push_back(cvManager.readCV(base_cv + 1));
-        rule.negative_conditions.push_back(cvManager.readCV(base_cv + 2));
-        rule.action = (MappingAction)cvManager.readCV(base_cv + 3);
-        functionManager.addMappingRule(rule);
     }
 }

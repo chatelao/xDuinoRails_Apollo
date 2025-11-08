@@ -77,6 +77,25 @@ bool FunctionManager::getConditionVariableState(uint8_t cv_id) const {
     return false; // Default to false if not found
 }
 
+void FunctionManager::reset() {
+    // Clear all configuration vectors
+    for (auto lf : _logical_functions) {
+        delete lf; // LogicalFunction owns the Effect pointer
+    }
+    _logical_functions.clear();
+    _condition_variables.clear();
+    _mapping_rules.clear();
+    _cv_states.clear();
+
+    // Reset state variables
+    for (int i = 0; i < MAX_DCC_FUNCTIONS; ++i) {
+        _function_states[i] = false;
+    }
+    _direction = DECODER_DIRECTION_FORWARD;
+    _speed = 0;
+    _state_changed = true;
+}
+
 void FunctionManager::evaluateMapping() {
     // 1. Evaluate all ConditionVariables and cache their states
     _cv_states.clear();
