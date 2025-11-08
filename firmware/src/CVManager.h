@@ -57,6 +57,7 @@ public:
     void begin();
 
 private:
+    uint16_t getMappedCvAddress(uint16_t cv_number);
     void setDefaultCVs();
     void loadCVsFromEeprom();
     void writeCvToEeprom(uint16_t cv_number, uint8_t value);
