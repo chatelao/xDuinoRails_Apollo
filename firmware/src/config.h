@@ -1,136 +1,133 @@
 /**
  * @file config.h
- * @brief Zentrale Konfigurationsdatei für den Lokdecoder.
+ * @brief Central configuration file for the locomotive decoder.
  *
- * In dieser Datei werden alle wichtigen Einstellungen für den Betrieb des Decoders
- * vorgenommen. Dazu gehören die Auswahl des Digitalprotokolls (DCC oder MM),
- * die Zuweisung der Hardware-Pins für die Motorsteuerung und die Konfiguration
- * der Fahreigenschaften des Motors.
+ * This file contains all important settings for the decoder's operation,
+ * including the selection of the digital protocol (DCC or MM),
+ * the assignment of hardware pins for motor control, and the configuration
+ * of the motor's driving characteristics.
  *
- * @note Für PlatformIO-Benutzer werden einige dieser Einstellungen, insbesondere
- * die Protokollauswahl, durch die Umgebung in der `platformio.ini`-Datei
- * überschrieben. Arduino-IDE-Benutzer müssen die Konfiguration hier manuell
- * vornehmen.
+ * @note For PlatformIO users, some of these settings, especially
+ * the protocol selection, are overridden by the environment in the `platformio.ini` file.
+ * Arduino IDE users must perform the configuration here manually.
  */
 
 #ifndef CONFIG_H
 #define CONFIG_H
 
 // =====================================================================================
-// Protokoll-Konfiguration
+// Protocol Configuration
 // =====================================================================================
-// Wählen Sie hier das zu verwendende Protokoll aus, indem Sie eine der folgenden
-// Zeilen auskommentieren oder einkommentieren. Es darf immer nur ein Protokoll
-// aktiv sein.
+// Select the protocol to be used here by commenting or uncommenting one of the
+// following lines. Only one protocol can be active at a time.
 //
-// Für PlatformIO-Benutzer: Diese Einstellung wird durch die Umgebung in
-// `platformio.ini` automatisch überschrieben.
+// For PlatformIO users: This setting is automatically overridden by the
+// environment in `platformio.ini`.
 //
-// Für Arduino-IDE-Benutzer: Stellen Sie sicher, dass die benötigten Bibliotheken
-// (z.B. NmraDcc, MaerklinMotorola) manuell über den Bibliotheksverwalter
-// installiert sind.
+// For Arduino IDE users: Ensure that the required libraries
+// (e.g., NmraDcc, MaerklinMotorola) are manually installed via the
+// Library Manager.
 
 /**
- * @brief Definiert das zu verwendende Digitalprotokoll.
+ * @brief Defines the digital protocol to be used.
  *
- * - `PROTOCOL_MM`: Aktiviert das Märklin-Motorola-Protokoll.
- * - `PROTOCOL_DCC`: Aktiviert das DCC-Protokoll.
+ * - `PROTOCOL_MM`: Activates the Märklin-Motorola protocol.
+ * - `PROTOCOL_DCC`: Activates the DCC protocol.
  *
- * @warning Es darf immer nur ein Protokoll zur gleichen Zeit aktiviert sein.
+ * @warning Only one protocol may be active at the same time.
  */
 #define PROTOCOL_MM
 // #define PROTOCOL_DCC
 
 
 // =====================================================================================
-// Hardware-Pin-Konfiguration
+// Hardware Pin Configuration
 // =====================================================================================
-// Definieren Sie hier die Pins, die für die Ansteuerung der Motor-H-Brücke
-// verwendet werden.
+// Define the pins used for controlling the motor H-bridge here.
 
 /**
- * @brief Pin für das PWM-Signal 'A' der Motor-H-Brücke.
- * Dieser Pin steuert die Geschwindigkeit des Motors.
+ * @brief Pin for the 'A' PWM signal of the motor H-bridge.
+ * This pin controls the speed of the motor.
  */
 #define MOTOR_PIN_A 0
 
 /**
- * @brief Pin für das PWM-Signal 'B' der Motor-H-Brücke.
- * Dieser Pin wird zusammen mit MOTOR_PIN_A zur Steuerung der Drehrichtung verwendet.
+ * @brief Pin for the 'B' PWM signal of the motor H-bridge.
+ * This pin is used together with MOTOR_PIN_A to control the direction of rotation.
  */
 #define MOTOR_PIN_B 1
 
 /**
- * @brief Analoger Eingangspin zur Messung der Gegen-EMK (BEMF) an Motoranschluss A.
- * Wird für die erweiterte Lastregelung des Motors verwendet.
+ * @brief Analog input pin for measuring the back-EMF (BEMF) on motor connection A.
+ * Used for the advanced load regulation of the motor.
  */
 #define MOTOR_BEMF_A_PIN A3
 
 /**
- * @brief Analoger Eingangspin zur Messung der Gegen-EMK (BEMF) an Motoranschluss B.
- * Wird für die erweiterte Lastregelung des Motors verwendet.
+ * @brief Analog input pin for measuring the back-EMF (BEMF) on motor connection B.
+ * Used for the advanced load regulation of the motor.
  */
 #define MOTOR_BEMF_B_PIN A2
 
 // =====================================================================================
-// Funktions- & Ausgangs-Konfiguration (Function Mapping)
+// Function & Output Configuration (Function Mapping)
 // =====================================================================================
-// In diesem Abschnitt wird die gesamte Konfiguration der Licht- und Sonderfunktionen
-// vorgenommen. Das System ist in drei Stufen aufgebaut:
+// All configuration for light and special functions is done in this section.
+// The system is structured in three levels:
 //
-// 1. Physische Ausgänge (Physical Outputs):
-//    Definieren Sie hier alle Hardware-Pins, die als Ausgänge verwendet werden sollen.
+// 1. Physical Outputs:
+//    Define all hardware pins that are to be used as outputs here.
 //
-// 2. Logische Funktionen (Logical Functions):
-//    Eine logische Funktion ist eine Eigenschaft der Lok (z.B. "Stirnlicht vorne").
-//    Jeder logischen Funktion wird ein Licht-Effekt (z.B. "Dauerlicht") und
-//    mindestens ein physischer Ausgang zugewiesen.
+// 2. Logical Functions:
+//    A logical function is a property of the locomotive (e.g., "front headlight").
+//    Each logical function is assigned a light effect (e.g., "steady light") and
+//    at least one physical output.
 //
 // 3. Mapping:
-//    Hier wird festgelegt, welche Taste auf der Zentrale (z.B. F0) welche
-//    logische Funktion steuert.
+//    Here it is defined which key on the command station (e.g., F0) controls which
+//    logical function.
 //
-// HINWEIS FÜR PHASE 1: Das Mapping ist noch direkt. F0 steuert die erste
-// definierte logische Funktion, F1 die zweite, und so weiter.
+// NOTE FOR PHASE 1: The mapping is still direct. F0 controls the first
+// defined logical function, F1 the second, and so on.
 // =====================================================================================
 
-// --- 1. Physische Ausgänge definieren ---
-// Jeder Ausgang erhält einen eindeutigen Namen und eine Pin-Nummer.
-#define PO_HEADLIGHT_FWD 26 // Stirnlicht vorne
-#define PO_HEADLIGHT_REV 27 // Stirnlicht hinten
-#define PO_CABIN_LIGHT 28   // Führerstandsbeleuchtung (Beispiel)
-#define PO_SERVO_1 29       // Servo 1 (Beispiel)
+// --- 1. Define Physical Outputs ---
+// Each output receives a unique name and a pin number.
+#define PO_HEADLIGHT_FWD 26 // Front headlight
+#define PO_HEADLIGHT_REV 27 // Rear headlight
+#define PO_CABIN_LIGHT 28   // Cabin light (example)
+#define PO_SERVO_1 29       // Servo 1 (example)
 
-// --- 2. Logische Funktionen und Effekte definieren ---
-// Hier wird die Setup-Logik für den FunctionManager vorbereitet.
-// Dies geschieht in der `setup()`-Funktion in `main.cpp`.
+// --- 2. Define Logical Functions and Effects ---
+// Here the setup logic for the FunctionManager is prepared.
+// This is done in the `setup()` function in `main.cpp`.
 //
-// Beispiel-Konfiguration:
-// - F0: Richtungsabhängiges Stirnlicht (noch nicht implementiert, für Phase 1 nur einfaches An/Aus)
-// - F1: Führerstandsbeleuchtung an/aus
+// Example configuration:
+// - F0: Directional headlight (not yet implemented, for Phase 1 only simple on/off)
+// - F1: Cabin light on/off
 //
-// WICHTIG: Die Reihenfolge der Aufrufe von `functionManager.addLogicalFunction`
-// in `main.cpp` bestimmt das Mapping:
-// - Der erste Aufruf wird von F0 gesteuert.
-// - Der zweite Aufruf wird von F1 gesteuert.
-// - usw.
+// IMPORTANT: The order of the calls to `functionManager.addLogicalFunction`
+// in `main.cpp` determines the mapping:
+// - The first call is controlled by F0.
+// - The second call is controlled by F1.
+// - etc.
 
-// Helligkeits-Definitionen
+// Brightness Definitions
 #define BRIGHTNESS_FULL 255
 #define BRIGHTNESS_DIMMED 80
 
 
 // =====================================================================================
-// Motor-Konfiguration für xDuinoRails_MotorControl
+// Motor Configuration for xDuinoRails_MotorControl
 // =====================================================================================
-// Die primären Motoreinstellungen (Beschleunigung, Bremszeit, Anfahrspannung)
-// werden nun über DCC-CVs (CV 2, 3, 4) konfiguriert. Die hier verbleibenden
-// Werte sind für speziellere Anpassungen.
+// The primary motor settings (acceleration, braking time, startup voltage)
+// are now configured via DCC CVs (CV 2, 3, 4). The remaining values here
+// are for more specific adjustments.
 
 /**
- * @brief Dauer des "Startup Kick" in Millisekunden.
- * Definiert, wie lange der unter CV 2 (`MOTOR_STARTUP_KICK_PWM`) definierte Impuls
- * angelegt wird. Dieser Wert ist nicht per CV änderbar.
+ * @brief Duration of the "Startup Kick" in milliseconds.
+ * Defines how long the pulse defined under CV 2 (`MOTOR_STARTUP_KICK_PWM`)
+ * is applied. This value is not changeable via CV.
  */
 #define MOTOR_STARTUP_KICK_DURATION 10
 
