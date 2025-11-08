@@ -23,6 +23,11 @@ This section covers the standard CVs for basic decoder setup.
 | **7** | **Firmware Version** | Version number of the decoder firmware. Read-only. | Read | `1` | **Implemented** |
 | **8** | **Manufacturer ID** | Identifier of the manufacturer (NMRA Standard). `165` is reserved for DIY projects. Read-only. | Read | `165` | **Implemented** |
 | | | | | | |
+| 11 | Packet Time-out | Time in 32ms increments to wait for a valid data packet before stopping the motor. `0` = infinite. | 0-255 | `0` | Not Implemented |
+| 12 | Power Source Lock | Bit-field for enabling/disabling supported protocols. See table below. | Bit-field | `3` | Not Implemented |
+| 13 | Analog Function Enable 1 | Bit-field for enabling functions F1-F8 in analog mode. | Bit-field | `0` | Not Implemented |
+| 14 | Analog Function Enable 2 | Bit-field for enabling F0 (FL) and F9-F12 in analog mode. | Bit-field | `1` | Not Implemented |
+| | | | | | |
 | 17 | Extended Address (High Byte) | The high byte for long DCC addresses (128-10239). | 192-231 | `192` | Not Implemented |
 | 18 | Extended Address (Low Byte) | The low byte for long DCC addresses. | 0-255 | `3` | Not Implemented |
 | | | | | | |
@@ -40,6 +45,14 @@ This section covers the standard CVs for basic decoder setup.
 | 5 | Extended Addressing | `0`=Use Primary Address (CV 1), `1`=Use Extended Address (CV 17/18) |
 | 6 | *Reserved* | |
 | 7 | Accessory Decoder Mode | `0`=Multi-function Decoder, `1`=Accessory Decoder |
+
+### CV 12 - Power Source Lock (Bit-field)
+
+| Bit | Name | Description |
+|---|---|---|
+| 0 | DCC Enable | `1`=DCC Protocol Enabled |
+| 1 | Märklin Motorola (MM) Enable | `1`=MM Protocol Enabled |
+| 2-7 | *Reserved* | |
 
 ---
 

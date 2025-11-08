@@ -24,9 +24,19 @@ This document describes the necessary steps to develop a fully functional multi-
 - [x] **2. Function Outputs**
     - [x] Implement control for at least one function output (e.g., for lighting).
     - [x] Evaluate function commands (F0, F1, etc.) from the `MaerklinMotorola` library.
-- [ ] **3. Multi-protocol Capability (Simultaneous Operation)**
-    - [ ] Extend the decoder to automatically distinguish between DCC and MM signals at runtime.
-    - [ ] Create a common interface for motor and function control that can be used by both protocol implementations.
+- [ ] **3. Multi-protocol Capability (RCN-200 Compliance)**
+    - [ ] **Protocol Detection:** Implement a robust state machine to detect DCC and MM protocols at runtime as per RCN-200 section 4.1.
+    - [ ] **Startup Protocol Selection:** Implement the startup logic defined in RCN-200 section 4.2.
+        - [ ] If only one protocol is enabled (via CV 12), use it immediately.
+        - [ ] If a preferred protocol is configured, select it upon detection.
+        - [ ] If no preference is set, select the first protocol that addresses the decoder.
+    - [ ] **Runtime Protocol Switching:** Implement the logic for switching between protocols during operation, as specified in RCN-200 section 4.3 (based on a configurable timeout).
+    - [ ] **Analog Mode Handling:** Implement the rules for entering and exiting analog DC and AC modes as defined in RCN-200 section 5.
+        - [ ] Enable/disable analog mode via CV 29, Bit 2.
+        - [ ] Detect analog signals only when no supported digital protocol is found.
+        - [ ] Activate functions in analog mode based on CV 13 and CV 14.
+    - [ ] **Smooth Transitions:** Ensure that speed, direction, and function states are maintained or gracefully adjusted when transitioning between any operating modes (digital-digital, digital-analog) as required by RCN-200 section 6.
+    - [ ] **CV Implementation:** Add CVs 11, 12, 13, and 14 to `CVManager` and `cv_definitions.h` to support the new functionality.
 - [x] **4. Configurability**
     - [x] Implement a way to program the decoder's MM address.
     - [x] Add configurable parameters such as acceleration and braking delay (ABV) via CVs.
