@@ -31,47 +31,28 @@ void CVManager::setDefaultCVs() {
     _cv_values[CV_START_VOLTAGE] = DECODER_DEFAULT_START_VOLTAGE;
     _cv_values[CV_ACCELERATION_RATE] = DECODER_DEFAULT_ACCELERATION_RATE;
     _cv_values[CV_DECELERATION_RATE] = DECODER_DEFAULT_DECELERATION_RATE;
+    _cv_values[CV_MAXIMUM_SPEED] = DECODER_DEFAULT_MAXIMUM_SPEED;
     _cv_values[CV_MANUFACTURER_ID] = DECODER_DEFAULT_MANUFACTURER_ID;
     _cv_values[CV_DECODER_VERSION_ID] = DECODER_DEFAULT_VERSION_ID;
+    _cv_values[CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB] = DECODER_DEFAULT_EXT_ADDRESS_MSB;
+    _cv_values[CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB] = DECODER_DEFAULT_EXT_ADDRESS_LSB;
     _cv_values[CV_DECODER_CONFIGURATION] = DECODER_DEFAULT_CV29_CONFIG;
 
-    // --- Default Function Mapping (Proprietary System) ---
-    // This setup creates a direction-dependent headlight on F0.
+    // --- RCN-225 Function Mapping (CVs 33-46) ---
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 0] = DECODER_DEFAULT_F0_FWD_MAPPING; // CV 33
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 1] = DECODER_DEFAULT_F0_REV_MAPPING; // CV 34
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 2] = DECODER_DEFAULT_F1_MAPPING;   // CV 35
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 3] = DECODER_DEFAULT_F2_MAPPING;   // CV 36
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 4] = DECODER_DEFAULT_F3_MAPPING;   // CV 37
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 5] = DECODER_DEFAULT_F4_MAPPING;   // CV 38
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 6] = DECODER_DEFAULT_F5_MAPPING;   // CV 39
+    _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + 7] = DECODER_DEFAULT_F6_MAPPING;   // CV 40
+    // CVs 41-46 (F7-F12) default to 0, which means no mapping.
+    for (int i = 8; i <= (CV_OUTPUT_LOCATION_CONFIG_END - CV_OUTPUT_LOCATION_CONFIG_START); ++i) {
+        _cv_values[CV_OUTPUT_LOCATION_CONFIG_START + i] = 0;
+    }
 
-    // LF 0: Headlight Fwd (Steady, Full Brightness, Output 0)
-    _cv_values[CV_BASE_LOGICAL_FUNCTIONS + 0] = 1; // Effect Type: Steady
-    _cv_values[CV_BASE_LOGICAL_FUNCTIONS + 1] = 255; // Brightness
-    _cv_values[CV_BASE_LOGICAL_FUNCTIONS + 4] = 0; // Physical Output 0
-
-    // LF 1: Headlight Rev (Steady, Full Brightness, Output 1)
-    _cv_values[CV_BASE_LOGICAL_FUNCTIONS + 8] = 1; // Effect Type: Steady
-    _cv_values[CV_BASE_LOGICAL_FUNCTIONS + 9] = 255; // Brightness
-    _cv_values[CV_BASE_LOGICAL_FUNCTIONS + 12] = 1; // Physical Output 1
-
-    // CV 1: F0 is ON
-    _cv_values[CV_BASE_COND_VARS + 0] = 1; // Source: Func Key
-    _cv_values[CV_BASE_COND_VARS + 1] = 1; // Comparator: IS_ON
-    _cv_values[CV_BASE_COND_VARS + 2] = 0; // Parameter: F0
-
-    // CV 2: Direction is FWD
-    _cv_values[CV_BASE_COND_VARS + 4] = 2; // Source: Direction
-    _cv_values[CV_BASE_COND_VARS + 5] = 3; // Comparator: IS_FWD
-
-    // CV 3: Direction is REV
-    _cv_values[CV_BASE_COND_VARS + 8] = 2; // Source: Direction
-    _cv_values[CV_BASE_COND_VARS + 9] = 4; // Comparator: IS_REV
-
-    // Rule 0: (F0 ON AND Dir FWD) -> Turn ON LF 0 (Headlight Fwd)
-    _cv_values[CV_BASE_MAPPING_RULES + 0] = 1; // Target LF 1 (index 0)
-    _cv_values[CV_BASE_MAPPING_RULES + 1] = 1; // Positive CV: CV1 (F0 ON)
-    _cv_values[CV_BASE_MAPPING_RULES + 2] = 2; // Positive CV: CV2 (Dir FWD)
-    _cv_values[CV_BASE_MAPPING_RULES + 3] = 1; // Action: TURN_ON
-
-    // Rule 1: (F0 ON AND Dir REV) -> Turn ON LF 1 (Headlight Rev)
-    _cv_values[CV_BASE_MAPPING_RULES + 4] = 2; // Target LF 2 (index 1)
-    _cv_values[CV_BASE_MAPPING_RULES + 5] = 1; // Positive CV: CV1 (F0 ON)
-    _cv_values[CV_BASE_MAPPING_RULES + 6] = 3; // Positive CV: CV3 (Dir REV)
-    _cv_values[CV_BASE_MAPPING_RULES + 7] = 1; // Action: TURN_ON
+    _cv_values[CV_FUNCTION_MAPPING_METHOD] = DECODER_DEFAULT_FUNCTION_MAPPING_METHOD;
 }
 
 // --- EEPROM Persistence (Placeholder) ---

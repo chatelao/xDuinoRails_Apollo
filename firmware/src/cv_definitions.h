@@ -67,8 +67,22 @@
 #define DECODER_DEFAULT_START_VOLTAGE 80    // Project specific, adjust as needed
 #define DECODER_DEFAULT_ACCELERATION_RATE 50  // Project specific, adjust as needed
 #define DECODER_DEFAULT_DECELERATION_RATE 100 // Project specific, adjust as needed
+#define DECODER_DEFAULT_MAXIMUM_SPEED 255   // Full speed
+#define DECODER_DEFAULT_EXT_ADDRESS_MSB 195 // High byte for address 1000
+#define DECODER_DEFAULT_EXT_ADDRESS_LSB 232 // Low byte for address 1000
 #define DECODER_DEFAULT_MANUFACTURER_ID 165 // NMRA ID for DIY/Home-built decoders
 #define DECODER_DEFAULT_CV29_CONFIG 6       // Enable 28/128 speed steps and analog mode
 #define DECODER_DEFAULT_VERSION_ID 1        // Firmware version 1
+
+// RCN-225 Default Function Mappings (CVs 33-46)
+#define DECODER_DEFAULT_F0_FWD_MAPPING 1   // Map F0 Fwd to Output 1
+#define DECODER_DEFAULT_F0_REV_MAPPING 2   // Map F0 Rev to Output 2
+#define DECODER_DEFAULT_F1_MAPPING 4     // Map F1 to Output 3
+#define DECODER_DEFAULT_F2_MAPPING 8     // Map F2 to Output 4
+#define DECODER_DEFAULT_F3_MAPPING 16    // Map F3 to Output 5
+#define DECODER_DEFAULT_F4_MAPPING 32    // Map F4 to Output 6
+#define DECODER_DEFAULT_F5_MAPPING 64    // Map F5 to Output 7
+#define DECODER_DEFAULT_F6_MAPPING 128   // Map F6 to Output 8
+#define DECODER_DEFAULT_FUNCTION_MAPPING_METHOD 1 // Use RCN-225 standard mapping by default
 
 #endif // CV_DEFINITIONS_H

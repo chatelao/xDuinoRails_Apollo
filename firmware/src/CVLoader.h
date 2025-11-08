@@ -20,11 +20,6 @@ public:
      * @param physicalOutputManager The PhysicalOutputManager for linking outputs.
      */
     static void loadCvToFunctionManager(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager);
-
-private:
-    static void loadLogicalFunctions(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager);
-    static void loadConditionVariables(CVManager& cvManager, FunctionManager& functionManager);
-    static void loadMappingRules(CVManager& cvManager, FunctionManager& functionManager);
 };
 
 #endif // CV_LOADER_H
