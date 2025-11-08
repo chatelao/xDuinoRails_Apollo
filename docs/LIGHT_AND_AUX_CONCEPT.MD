@@ -130,61 +130,20 @@ Modern smoke units often have a heating element and a separate fan. This require
 
 ## 5. Function Mapping System
 
-The function mapping system connects the triggers (function keys, decoder state) to the logical functions. This system needs to be extremely flexible to accommodate the diverse operational schemes model railroaders use.
+The function mapping system connects user inputs (triggers) to the logical functions. The architecture is designed to be extremely powerful internally, while providing a standardized and user-friendly configuration interface.
 
-### 5.1. Mapping Table Concept
+### 5.1. Internal Architecture: Multi-Level Table Logic
 
-The core of the system is a **Mapping Table**. Each row in the table defines a rule that activates a logical function. The decoder continuously evaluates this table.
+The core of the decoder's mapping capability is a powerful and flexible "Multi-level Table Logic" engine. This system uses a set of user-defined "condition variables" (based on function key states, direction, speed, etc.) and a logic table that can evaluate complex boolean expressions (AND/OR/NOT) on these conditions to activate logical functions. This architecture provides the power needed for state-of-the-art features, far exceeding the capabilities of simple mapping systems.
 
-A single mapping table row would contain:
-- **Conditions**: A set of one or more conditions that must be true for the rule to be active.
-- **Target Logical Function**: The logical function to activate.
-- **Action**: What to do to the logical function (e.g., `TURN_ON`, `SET_BRIGHTNESS`, `TRIGGER_SERVO`).
+### 5.2. User Configuration: RCN-227 Standard
 
-### 5.2. Conditions
+While the internal engine is proprietary, the user-facing configuration will be implemented via the **RCN-227 standard for Extended Function Mapping**. This approach provides the best of both worlds:
 
-Conditions are the building blocks of the mapping logic.
+*   **Standardization & Compatibility**: Users can configure the decoder using familiar methods and tools (like JMRI) that support the RCN-227 standard.
+*   **Power & Flexibility**: The firmware will translate the standardized RCN-227 CVs into the more powerful rules for the internal engine, unlocking the full potential of the hardware and effects system.
 
-- **Function Key State**: `F_STATE(_key_, _state_)` (e.g., `F_STATE(1, ON)`, `F_STATE(5, OFF)`).
-- **Direction**: `DIRECTION_IS(_dir_)` (e.g., `DIRECTION_IS(FWD)`, `DIRECTION_IS(REV)`).
-- **Speed**: `SPEED_IS(_comparison_, _value_)` (e.g., `SPEED_IS(ZERO)`, `SPEED_IS(GT, 0)` for "is moving").
-- **Output State**: `LOGICAL_FUNC_STATE(_func_, _state_)` (e.g., check if another function is already active).
-
-### 5.3. Variants for Mapping Logic
-
-#### Variant A: Simple "AND" Logic (NMRA Style)
-
-This is the traditional approach, similar to the NMRA's extended function mapping CVs. Each mapping rule is a simple AND combination of conditions.
-
-*Example*: Activate "Front Headlight" IF `F0 is ON` AND `Direction is FWD`.
-*Pros*: Simple to understand and configure via CVs.
-*Cons*: Not very flexible. Cannot easily create "OR" logic or more complex scenarios.
-
-#### Variant B: Scripted Logic (Advanced)
-
-This approach uses a simple scripting language (like Lua) or a custom bytecode interpreter. The user could write small scripts to define the logic.
-
-*Example*: `if f_state(0) == ON and direction() == FWD then set_func("Front Headlight", ON) end`
-*Pros*: Extremely powerful and flexible.
-*Cons*: Very complex to implement and potentially difficult for non-technical users to configure. Overkill for most use cases.
-
-#### Variant C: Multi-level Table Logic (Proposed)
-
-This is a hybrid approach that offers a good balance of power and usability. It uses a set of "condition variables" and a final logic table.
-
-1.  **Condition Variables (CVs)**: The user first defines a set of boolean "condition variables" based on the basic triggers. For example:
-    - `C1 = F_STATE(1, ON)`
-    - `C2 = DIRECTION_IS(FWD)`
-    - `C3 = SPEED_IS(GT, 0)`
-2.  **Logic Table**: The mapping table then uses boolean logic on these condition variables.
-    - `IF (C1 AND C2 AND NOT C3) THEN Activate "Yard Mode Light"`
-
-*Pros*: Far more flexible than Variant A. Can create complex AND/OR/NOT logic. Still configurable via a structured table (CVs or a GUI). Avoids the complexity of full scripting.
-*Cons*: Requires more configuration steps than Variant A.
-
-### 5.4. Final Proposal
-
-**Variant C is the clear winner.** It provides the power needed for state-of-the-art features without introducing the steep learning curve of a scripting language. This system would be configured as a series of CVs representing the condition definitions and the final logic table entries.
+As defined in RCN-225 and RCN-227, the user can select the active mapping system using CV 96. This will allow switching between basic NMRA mapping, the various RCN-227 systems, and potentially a "native" mode to directly access the advanced internal engine in the future.
 
 ## 6. Protocol-Specific Considerations
 
@@ -194,7 +153,7 @@ The decoder is intended to be multi-protocol. While the core logic of the effect
 
 The DCC standard is very flexible and is the primary target for this feature set.
 - **Functions**: DCC supports a large number of functions (F0-F28 or even higher, depending on the command station). All these function keys can be used as triggers in the mapping table.
-- **Configuration**: Configuration is typically done via Configuration Variables (CVs). The proposed mapping system (Variant C) can be implemented entirely through CVs. A future PC-based configuration tool could also be used to provide a more user-friendly interface.
+- **Configuration**: Configuration is typically done via Configuration Variables (CVs). The RCN-227 standard provides a comprehensive and compatible method for this.
 
 ### 6.2. Märklin-Motorola (MM)
 
@@ -208,42 +167,52 @@ The MM protocol is older and more limited.
   - The powerful mapping table allows a single MM function key to have different effects based on direction or speed, partially compensating for the limited number of keys.
 - **Configuration**: Configuration on MM-only systems is more challenging. The initial setup would likely require a DCC system to write the CVs. For users without access to DCC, a simplified, pre-configured "personality" could be selected via a single CV.
 
-## 7. Proposed Implementation Roadmap
+## 7. RCN-227 Implementation Roadmap
 
-To make this large project manageable, a phased implementation is recommended.
+To manage the complexity of this feature, a phased implementation is planned. This will allow for incremental development and testing, reducing risk and ensuring a robust final product.
 
-### Phase 1: Core Infrastructure
+### Phase 1: Core Infrastructure & RCN-225
 
-- **Goal**: Establish the foundational software components.
+- **Goal**: Refactor the existing mapping system to support the new architecture and implement the baseline RCN-225 standard.
 - **Tasks**:
-  1. Implement the core classes for Physical Outputs and Logical Functions.
-  2. Implement the `LightEffect` base class and the simplest effects: `Steady` and `Dimming`.
-  3. Implement a basic, direct mapping system (a simplified version of Variant A) to allow F-keys to turn logical functions on and off.
-- **Outcome**: A working system with basic, remappable function outputs.
+  1.  **Refactor `CVLoader`**: Modify the `CVLoader` to read and parse the CVs required for RCN-225 (CVs 33-46 and CV 96).
+  2.  **Refactor `FunctionManager`**: Update the `FunctionManager` to accept mapping rules from the `CVLoader` and populate its internal "Multi-level Table Logic" engine.
+  3.  **Implement RCN-225 Logic**: Implement the basic direction-dependent function mapping as described in RCN-225.
+  4.  **Unit Tests**: Create a suite of unit tests to verify the RCN-225 implementation.
+- **Outcome**: A decoder that correctly implements the standard NMRA/RCN-225 function mapping, with the underlying architecture ready for RCN-227.
 
-### Phase 2: Advanced Effects & Mapping
+### Phase 2: RCN-227 - System per Function
 
-- **Goal**: Implement the full power of the proposed mapping system and lighting effects.
+- **Goal**: Implement the first of the advanced RCN-227 mapping systems.
 - **Tasks**:
-  1. Implement the full, multi-level table logic for function mapping (Variant C).
-  2. Implement all remaining advanced lighting effects (Flicker, Strobe, Mars Light, etc.).
-  3. Develop a comprehensive CV table to configure all new features.
-- **Outcome**: A decoder with state-of-the-art lighting capabilities.
+  1.  **Update `CVLoader`**: Extend `CVLoader` to handle the indexed CV access (via CV 31/32) and parse the "per function" mapping table (CV 32 = 40).
+  2.  **Implement Mapping Logic**: Add the logic to the `FunctionManager` to translate the RCN-227 "per function" bitmask into the internal rule set. This includes handling the "blocking" function logic.
+  3.  **Unit Tests**: Write specific unit tests to verify the "per function" mapping, including various bitmask combinations and the blocking functionality.
+- **Outcome**: The decoder now supports the RCN-227 "per function" mapping system, selectable via CV 96.
 
-### Phase 3: Auxiliary Functions
+### Phase 3: RCN-227 - System per Output (Versions 1 & 2)
 
-- **Goal**: Add support for non-lighting hardware.
+- **Goal**: Implement the simpler "per output" mapping systems.
 - **Tasks**:
-  1. Implement the `SERVO_CONTROL` effect.
-  2. Implement the `SMOKE_GENERATOR` effect, including speed-synchronized fan control.
-  3. Add CVs for configuring these new auxiliary functions.
-- **Outcome**: A full-featured decoder capable of handling complex animations and smoke effects.
+  1.  **Update `CVLoader`**: Extend `CVLoader` to parse the "per output" Version 1 (Matrix) and Version 2 (Function Number) tables (CV 32 = 41 and 42).
+  2.  **Implement V1 Logic**: Add logic to translate the V1 "Matrix" bitmasks for each output into the internal rule set.
+  3.  **Implement V2 Logic**: Add logic to translate the V2 "Function Number" lists (including the "disable" function) into the internal rule set.
+  4.  **Unit Tests**: Create comprehensive unit tests for both V1 and V2, covering various function combinations and the V2 disabling logic.
+- **Outcome**: The decoder now supports two additional RCN-227 mapping modes.
 
-### Phase 4: Tooling & Refinement
+### Phase 4: RCN-227 - System per Output (Version 3)
 
-- **Goal**: Improve user-friendliness and long-term maintainability.
+- **Goal**: Implement the most powerful and complex RCN-227 mapping system.
 - **Tasks**:
-  1. Develop a PC-based configuration tool to simplify the CV programming process.
-  2. Write comprehensive user documentation for all features.
-  3. Refine and optimize the code based on community feedback.
+  1.  **Update `CVLoader`**: Extend `CVLoader` to parse the "per output" Version 3 (Function or Binary State Number) table (CV 32 = 43).
+  2.  **Implement V3 Logic**: This is the most complex step. Implement the logic to handle direction-dependent functions, blocking functions, and the combined function/binary-state numbers. This will map directly to the most powerful features of the internal engine.
+  3.  **Unit Tests**: Develop an extensive set of unit tests for V3, covering all directional dependencies, blocking conditions, and complex scenarios described in the RCN-227 examples.
+- **Outcome**: The decoder now fully implements the RCN-227 standard.
+
+### Phase 5: Tooling & Documentation
+
+- **Goal**: Improve user-friendliness and finalize documentation.
+- **Tasks**:
+  1.  **JMRI Definition File**: Create or update a JMRI decoder definition XML file to provide a user-friendly GUI for configuring all the new RCN-227 CVs.
+  2.  **User Manual**: Write comprehensive user documentation explaining how to use the new function mapping capabilities.
 - **Outcome**: A mature, easy-to-use, and well-documented decoder framework.
