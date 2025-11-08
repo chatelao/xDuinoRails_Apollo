@@ -41,6 +41,7 @@ public:
     bool getConditionVariableState(uint8_t cv_id) const;
 
     // --- Test Hooks ---
+    void reset(); // Clear all configuration
     size_t getLogicalFunctionCount() const { return _logical_functions.size(); }
     size_t getConditionVariableCount() const { return _condition_variables.size(); }
     size_t getMappingRuleCount() const { return _mapping_rules.size(); }
