@@ -1,137 +1,144 @@
-# CV-Tabelle für den xDuino-Lokdecoder
+# CV Table for the xDuino Locomotive Decoder
 
-Dieses Dokument beschreibt die Konfigurationsvariablen (CVs) für den xDuino-Lokdecoder. Die CVs ermöglichen die Anpassung der Fahreigenschaften, der Adresse und weiterer Funktionen des Decoders.
+This document describes the Configuration Variables (CVs) for the xDuino locomotive decoder. The CVs allow for the adjustment of driving characteristics, address, and other decoder functions.
 
-Die Struktur orientiert sich an gängigen Industriestandards (z.B. ESU, ZIMO), um eine intuitive Bedienung mit den meisten digitalen Zentralen zu gewährleisten.
+The structure is divided into two main parts:
+1.  **Standard CVs:** These CVs follow the RCN-225 standard, ensuring compatibility and intuitive operation with most digital command stations.
+2.  **Proprietary Function Mapping:** This is a powerful, project-specific system for advanced configuration of lighting and auxiliary functions. It offers a high degree of flexibility beyond the standard NMRA function mapping.
 
-## CV-Übersicht
+---
 
-| CV | Name | Beschreibung | Wertebereich | Standardwert | Status |
-|----|------|--------------|--------------|--------------|--------|
-| **1** | **Primäre Adresse** | Die kurze DCC-Adresse der Lokomotive. | 1-127 | `3` | **Implementiert** |
-| 2 | Startspannung | Definiert die minimale Spannung (PWM-Wert), die an den Motor gesendet wird. Hilfreich für ein sanftes Anfahren. | 0-255 | `80` | **Implementiert** |
-| 3 | Beschleunigungszeit | Definiert die Zeit, die die Lokomotive benötigt, um von Geschwindigkeit 0 auf die Höchstgeschwindigkeit zu beschleunigen. Der Wert ist ein Multiplikator (z.B. Wert * 0.25s). | 0-255 | `20` (`50` in `config.h`) | **Implementiert** |
-| 4 | Bremszeit | Definiert die Zeit, die die Lokomotive benötigt, um von Höchstgeschwindigkeit auf 0 abzubremsen. Der Wert ist ein Multiplikator (z.B. Wert * 0.25s). | 0-255 | `40` (`100` in `config.h`) | **Implementiert** |
-| 5 | Maximale Geschwindigkeit | Begrenzt die Höchstgeschwindigkeit der Lokomotive. | 0-255 | `255` | Nicht implementiert |
-| 6 | Mittlere Geschwindigkeit | Definiert einen Punkt in der Mitte der Geschwindigkeitskurve für eine nicht-lineare Kennlinie. | 0-255 | `128` | Nicht implementiert |
-| 7 | Hersteller-Version | Versionsnummer der Decoder-Firmware. | Lesen | `1` | Nicht implementiert |
-| **8** | **Hersteller-ID** | Kennung des Herstellers (NMRA Standard). | Lesen | `165` (DIY) | **Implementiert** |
+## Section 1: Standard Configuration Variables (RCN-225)
+
+This section covers the standard CVs for basic decoder setup.
+
+| CV | Name | Description | Value Range | Default | Status |
+|----|------|-------------|-------------|---------|--------|
+| **1** | **Primary Address** | The short DCC address of the locomotive. | 1-127 | `3` | **Implemented** |
+| **2** | **Start Voltage** | Defines the minimum voltage (PWM value) sent to the motor at speed step 1. Useful for smooth starting. | 0-255 | `80` | **Implemented** |
+| **3** | **Acceleration Rate** | Defines the time the locomotive takes to accelerate from speed 0 to maximum speed. The value is a multiplier. | 0-255 | `50` | **Implemented** |
+| **4** | **Braking Rate** | Defines the time the locomotive takes to decelerate from maximum speed to 0. The value is a multiplier. | 0-255 | `100` | **Implemented** |
+| 5 | Maximum Speed | Limits the maximum speed of the locomotive. | 0-255 | `255` | Not Implemented |
+| 6 | Mid-Point Speed | Defines a point in the middle of the speed curve for a non-linear characteristic. | 0-255 | `128` | Not Implemented |
+| **7** | **Firmware Version** | Version number of the decoder firmware. Read-only. | Read | `1` | **Implemented** |
+| **8** | **Manufacturer ID** | Identifier of the manufacturer (NMRA Standard). `165` is reserved for DIY projects. Read-only. | Read | `165` | **Implemented** |
 | | | | | | |
-| 17 | Erweiterte Adresse (High Byte) | Höherwertiges Byte für lange DCC-Adressen (128-10239). | 192-231 | `192` | Nicht implementiert |
-| 18 | Erweiterte Adresse (Low Byte) | Niederwertiges Byte für lange DCC-Adressen. | 0-255 | `3` | Nicht implementiert |
+| 17 | Extended Address (High Byte) | The high byte for long DCC addresses (128-10239). | 192-231 | `192` | Not Implemented |
+| 18 | Extended Address (Low Byte) | The low byte for long DCC addresses. | 0-255 | `3` | Not Implemented |
 | | | | | | |
-| 29 | Konfigurationsdaten 1 | Bit-Feld für grundlegende Einstellungen (Fahrtrichtung, Geschwindigkeitsstufen, Adressmodus). | Bit-Feld | `6` | Nicht implementiert |
-| | | | | | |
-| 49 | Konfiguration Funktionsausgang 1 (Licht vorne) | Mapping und Effekte für den Lichtausgang vorne (F0f). | Bit-Feld | `tbd` | Nicht implementiert |
-| 50 | Konfiguration Funktionsausgang 2 (Licht hinten) | Mapping und Effekte für den Lichtausgang hinten (F0r). | Bit-Feld | `tbd` | Nicht implementiert |
+| **29** | **Configuration Data 1** | Bit-field for basic settings (direction, speed steps, address mode). | Bit-field | `6` | **Implemented** |
+
+### CV 29 - Configuration Data 1 (Bit-field)
+
+| Bit | Name | Description |
+|---|---|---|
+| 0 | Locomotive Direction | `0`=Normal, `1`=Reversed |
+| 1 | FL Location | `0`=F0 in Speed Packet (14 steps), `1`=F0 in Function Packet (28/128 steps) |
+| 2 | Power Source | `0`=Digital Only, `1`=Analog Mode Enabled |
+| 3 | RailCom Enable | `0`=Disabled, `1`=Enabled |
+| 4 | Speed Table Enable | `0`=Use CVs 2, 5, 6 for curve, `1`=Use custom speed table (CVs 67-94) |
+| 5 | Extended Addressing | `0`=Use Primary Address (CV 1), `1`=Use Extended Address (CV 17/18) |
+| 6 | *Reserved* | |
+| 7 | Accessory Decoder Mode | `0`=Multi-function Decoder, `1`=Accessory Decoder |
 
 ---
 
-### Hinweise zu den Werten
+## Section 2: Proprietary Advanced Function Mapping
 
-*   **Beschleunigungs-/Bremszeit (CV 3/4):** Die aktuellen Werte in `config.h` sind `50` und `100` (Einheit: `PPS^2`). Um dies auf den NMRA-Standard (Wert * 0.25s) abzubilden, müssen die Werte in der Firmware umgerechnet werden. Die Standardwerte in der Tabelle (`20` und `40`) sind Annäherungen und können angepasst werden.
-*   **Hersteller-ID (CV 8):** Der Wert `165` ist im NMRA-Verzeichnis für "DIY and home-built decoders" reserviert und wird in der Firmware bereits verwendet.
-*   **Erweiterte Adressen (CV 17/18):** Die Implementierung erfordert die Auswertung von CV 29, um zwischen kurzer und langer Adresse umzuschalten.
-*   **Funktionsausgänge (CV 49/50):** Diese CVs sind für einfache Decoder gedacht. Das hier implementierte erweiterte "Function Mapping" (siehe unten) macht sie weitgehend überflüssig. Sie werden vorerst nicht implementiert.
+The advanced function mapping is a highly flexible system based on three main components: **Logical Functions**, **Condition Variables**, and **Mapping Rules**. These are configured via dedicated CV blocks.
 
----
+### 1. Logical Functions (CV 200-455) - **IMPLEMENTED**
 
-## Konfiguration des Erweiterten Funktions-Mappings
+Logical functions define *what* the decoder does (e.g., turn on a light, move a servo). Up to 32 logical functions can be configured. Each function occupies a block of 8 CVs.
 
-Das erweiterte Funktions-Mapping ist ein extrem flexibles System, das auf drei Hauptkomponenten basiert: **Logische Funktionen**, **Bedingungsvariablen** und **Mapping-Regeln**. Diese werden über dedizierte CV-Bereiche konfiguriert.
+- **Base CV:** `200`
+- **Number of Blocks:** `32`
+- **Block Size:** `8 CVs`
 
-### 1. Logische Funktionen (CV 200-455) - **IMPLEMENTIERT**
+| CV (Base + Offset) | Name | Description | Value Range |
+|---------------------|------|-------------|-------------|
+| **Base + 0** | **Effect Type** | Defines the behavior of the function. | 0-255 |
+| Base + 1 | Parameter 1 | First parameter for the chosen effect. | 0-255 |
+| Base + 2 | Parameter 2 | Second parameter for the chosen effect. | 0-255 |
+| Base + 3 | Parameter 3 | Third parameter for the chosen effect. | 0-255 |
+| Base + 4 | Physical Output 1 ID | ID of the first associated output (0-based). | 0-255 |
+| Base + 5 | Physical Output 2 ID | ID of the second output (e.g., for smoke generator fan). | 0-255 |
+| Base + 6 | (Reserved) | | |
+| Base + 7 | (Reserved) | | |
 
-Die logischen Funktionen definieren, *was* der Decoder tut (z.B. ein Licht einschalten, ein Servo bewegen). Es können bis zu 32 logische Funktionen konfiguriert werden. Jede Funktion belegt einen Block von 8 CVs.
+#### Effect Types and their Parameters
 
-- **Basis-CV:** `200`
-- **Anzahl Blöcke:** `32`
-- **Blockgröße:** `8 CVs`
-
-| CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
-|---------------------|------|--------------|--------------|
-| **Base + 0** | **Effekt-Typ** | Definiert das Verhalten der Funktion. | 0-255 |
-| Base + 1 | Parameter 1 | Erster Parameter für den gewählten Effekt. | 0-255 |
-| Base + 2 | Parameter 2 | Zweiter Parameter für den gewählten Effekt. | 0-255 |
-| Base + 3 | Parameter 3 | Dritter Parameter für den gewählten Effekt. | 0-255 |
-| Base + 4 | Physischer Ausgang 1 ID | ID des ersten zugeordneten Ausgangs (0-basiert). | 0-255 |
-| Base + 5 | Physischer Ausgang 2 ID | ID des zweiten Ausgangs (z.B. für Rauchgenerator-Lüfter). | 0-255 |
-| Base + 6 | (Reserviert) | | |
-| Base + 7 | (Reserviert) | | |
-
-### Effekt-Typen und ihre Parameter
-
-| Typ-ID | Effekt | Parameter 1 | Parameter 2 | Parameter 3 |
-|--------|--------|---------------|---------------|---------------|
-| 1 | **Dauerlicht** (Steady) | Helligkeit | - | - |
-| 2 | **Dimmen** (Dimming) | Helligkeit (voll) | Helligkeit (gedimmt) | - |
-| 3 | **Flackern** (Flicker) | Basish Helligkeit | Flackertiefe | Flackergeschwindigkeit |
-| 4 | **Stroboskop** (Strobe) | Frequenz (Hz) | Einschaltdauer (%) | Helligkeit |
-| 5 | **Mars Light** | Frequenz (mHz) | Spitzenhelligkeit | Phasenverschiebung (%) |
-| 6 | **Sanftes Ein-/Ausschalten** | Einblendzeit (ms/2) | Ausblendzeit (ms/2) | Ziel-Helligkeit |
-| 7 | **Servo** | Endpunkt A (Grad) | Endpunkt B (Grad) | Bewegungsgeschwindigkeit |
-| 8 | **Rauchgenerator** | Heizung an/aus (0/1) | Lüftergeschwindigkeit | - |
+| Type ID | Effect | Parameter 1 | Parameter 2 | Parameter 3 |
+|---|---|---|---|---|
+| 1 | **Steady** | Brightness | - | - |
+| 2 | **Dimming** | Brightness (full) | Brightness (dimmed) | - |
+| 3 | **Flicker** | Base Brightness | Flicker Depth | Flicker Speed |
+| 4 | **Strobe** | Frequency (Hz) | Duty Cycle (%) | Brightness |
+| 5 | **Mars Light** | Frequency (mHz) | Peak Brightness | Phase Shift (%) |
+| 6 | **Soft Start/Stop** | Fade-in time (ms/2) | Fade-out time (ms/2) | Target Brightness |
+| 7 | **Servo** | Endpoint A (degrees) | Endpoint B (degrees) | Movement Speed |
+| 8 | **Smoke Generator** | Heater on/off (0/1) | Fan Speed | - |
 
 ---
 
-### 2. Bedingungsvariablen (CV 500-627) - **IMPLEMENTIERT**
+### 2. Condition Variables (CV 500-627) - **IMPLEMENTED**
 
-Die Bedingungsvariablen definieren, *wann* etwas passieren soll. Sie prüfen den Zustand des Decoders (z.B. "Fährt der Zug vorwärts?", "Ist F1 eingeschaltet?"). Es können bis zu 32 Bedingungsvariablen konfiguriert werden. Jede Variable belegt einen Block von 4 CVs.
+Condition variables define *when* something should happen. They check the decoder's state (e.g., "Is the train moving forward?", "Is F1 active?"). Up to 32 condition variables can be configured. Each variable occupies a block of 4 CVs.
 
-- **Basis-CV:** `500`
-- **Anzahl Blocke:** `32`
-- **Blockgröße:** `4 CVs`
+- **Base CV:** `500`
+- **Number of Blocks:** `32`
+- **Block Size:** `4 CVs`
 
-| CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
-|---------------------|------|--------------|--------------|
-| **Base + 0** | **Quelle (Source)** | Die Datenquelle, die geprüft werden soll. | `1-4` |
-| Base + 1 | **Vergleichsoperator (Comparator)** | Wie die Quelle geprüft werden soll. | `1-8` |
-| Base + 2 | **Parameter** | Der Wert, mit dem verglichen wird. | `0-255` |
-| Base + 3 | (Reserviert) | | |
+| CV (Base + Offset) | Name | Description | Value Range |
+|---------------------|------|-------------|-------------|
+| **Base + 0** | **Source** | The data source to be checked. | `1-4` |
+| Base + 1 | **Comparator** | How the source should be checked. | `1-8` |
+| Base + 2 | **Parameter** | The value to compare against. | `0-255` |
+| Base + 3 | (Reserved) | | |
 
-#### Quellen (Source)
+#### Sources
 
-| ID | Quelle | Beschreibung |
-|----|--------|--------------|
-| 1 | **Function Key** | Zustand einer Funktionstaste (F0-F28). Parameter = Tasten-Nummer. |
-| 2 | **Direction** | Fahrtrichtung des Decoders. |
-| 3 | **Speed** | Geschwindigkeit des Decoders. |
-| 4 | **Logical Function State** | Zustand einer anderen logischen Funktion. Parameter = LF ID (1-32). |
+| ID | Source | Description |
+|---|---|---|
+| 1 | **Function Key** | State of a function key (F0-F28). Parameter = Key number. |
+| 2 | **Direction** | The decoder's direction of travel. |
+| 3 | **Speed** | The decoder's speed. |
+| 4 | **Logical Function State** | State of another logical function. Parameter = LF ID (1-32). |
 
-#### Vergleichsoperatoren (Comparator)
+#### Comparators
 
-| ID | Operator | Beschreibung |
-|----|----------|--------------|
-| 1 | `EQ` (Equal) | Ist gleich |
-| 2 | `NEQ` (Not Equal) | Ist ungleich |
-| 3 | `GT` (Greater Than) | Ist größer als |
-| 4 | `LT` (Less Than) | Ist kleiner als |
-| 5 | `GTE` (Greater Than or Equal) | Ist größer oder gleich |
-| 6 | `LTE` (Less Than or Equal) | Ist kleiner oder gleich |
-| 7 | `BIT_AND` | Bit-weises UND ist nicht null |
-| 8 | `IS_TRUE` | Ist wahr (Wert != 0) |
+| ID | Operator | Description |
+|---|---|---|
+| 1 | `EQ` (Equal) | Is equal to |
+| 2 | `NEQ` (Not Equal) | Is not equal to |
+| 3 | `GT` (Greater Than) | Is greater than |
+| 4 | `LT` (Less Than) | Is less than |
+| 5 | `GTE` (Greater Than or Equal) | Is greater than or equal to |
+| 6 | `LTE` (Less Than or Equal) | Is less than or equal to |
+| 7 | `BIT_AND` | Bitwise AND is not zero |
+| 8 | `IS_TRUE` | Is true (value != 0) |
 
 ---
 
-### 3. Mapping-Regeln (CV 700-955) - **IMPLEMENTIERT**
+### 3. Mapping Rules (CV 700-955) - **IMPLEMENTED**
 
-Die Mapping-Regeln sind das Herzstück des Systems. Sie verknüpfen die **Bedingungsvariablen** mit den **Logischen Funktionen**. Eine Regel lautet z.B.: "Wenn Bedingung 1 wahr ist UND Bedingung 2 nicht wahr ist, DANN schalte die logische Funktion 5 ein." Es können bis zu 64 Regeln konfiguriert werden. Jede Regel belegt einen Block von 4 CVs.
+Mapping rules are the core of the system. They link **Condition Variables** to **Logical Functions**. A rule might be: "IF Condition 1 is true AND Condition 2 is not true, THEN activate Logical Function 5." Up to 64 rules can be configured. Each rule occupies a block of 4 CVs.
 
-- **Basis-CV:** `700`
-- **Anzahl Blöcke:** `64`
-- **Blockgröße:** `4 CVs`
+- **Base CV:** `700`
+- **Number of Blocks:** `64`
+- **Block Size:** `4 CVs`
 
-| CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
-|---------------------|------|--------------|--------------|
-| **Base + 0** | **Ziel Logische Funktion ID** | ID der zu steuernden logischen Funktion (1-32). | `1-32` |
-| Base + 1 | **Positive Bedingung ID** | ID der Bedingungsvariable (1-32), die WAHR sein muss. 0 = ignoriert. | `0-32` |
-| Base + 2 | **Negative Bedingung ID** | ID der Bedingungsvariable (1-32), die FALSCH sein muss. 0 = ignoriert. | `0-32` |
-| Base + 3 | **Aktion (Action)** | Was mit der logischen Funktion geschehen soll. | `1-3` |
+| CV (Base + Offset) | Name | Description | Value Range |
+|---------------------|------|-------------|-------------|
+| **Base + 0** | **Target Logical Function ID** | ID of the logical function to be controlled (1-32). | `1-32` |
+| Base + 1 | **Positive Condition ID** | ID of the condition variable (1-32) that must be TRUE. 0 = ignored. | `0-32` |
+| Base + 2 | **Negative Condition ID** | ID of the condition variable (1-32) that must be FALSE. 0 = ignored. | `0-32` |
+| Base + 3 | **Action** | What should happen to the logical function. | `1-3` |
 
-#### Aktionen (Action)
+#### Actions
 
-| ID | Aktion | Beschreibung |
-|----|--------|--------------|
-| 1 | `ACTIVATE` | Aktiviert die logische Funktion. |
-| 2 | `DEACTIVATE` | Deaktiviert die logische Funktion. |
-| 3 | `SET_DIMMED` | Setzt den "dimmed" Zustand der Funktion (nur für `EffectDimming`). |
+| ID | Action | Description |
+|---|---|---|
+| 1 | `ACTIVATE` | Activates the logical function. |
+| 2 | `DEACTIVATE` | Deactivates the logical function. |
+| 3 | `SET_DIMMED` | Sets the "dimmed" state of the function (only for `EffectDimming`). |

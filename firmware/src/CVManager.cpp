@@ -1,11 +1,12 @@
 #include "CVManager.h"
+#include "cv_definitions.h"
 #include "Arduino.h" // For EEPROM, etc.
 
 CVManager::CVManager() {}
 
 void CVManager::begin() {
-    // For now, we'll just load the defaults.
-    // In a real implementation, we would try to load from EEPROM first.
+    // For now, we'll just load the defaults. In a production implementation,
+    // this would be replaced with a call to loadCVsFromEeprom().
     setDefaultCVs();
 }
 
@@ -25,14 +26,16 @@ void CVManager::writeCV(uint16_t cv_number, uint8_t value) {
 void CVManager::setDefaultCVs() {
     _cv_values.clear();
 
-    // --- Standard CVs (from CV_MAPPING.md) ---
-    _cv_values[1] = 3;    // Primary Address
-    _cv_values[2] = 80;   // Start Voltage
-    _cv_values[3] = 20;   // Acceleration Rate
-    _cv_values[4] = 40;   // Deceleration Rate
-    _cv_values[8] = 165;  // Manufacturer ID (DIY)
+    // --- Standard CVs (aligned with RCN-225) ---
+    _cv_values[CV_MULTIFUNCTION_PRIMARY_ADDRESS] = DECODER_DEFAULT_PRIMARY_ADDRESS;
+    _cv_values[CV_START_VOLTAGE] = DECODER_DEFAULT_START_VOLTAGE;
+    _cv_values[CV_ACCELERATION_RATE] = DECODER_DEFAULT_ACCELERATION_RATE;
+    _cv_values[CV_DECELERATION_RATE] = DECODER_DEFAULT_DECELERATION_RATE;
+    _cv_values[CV_MANUFACTURER_ID] = DECODER_DEFAULT_MANUFACTURER_ID;
+    _cv_values[CV_DECODER_VERSION_ID] = DECODER_DEFAULT_VERSION_ID;
+    _cv_values[CV_DECODER_CONFIGURATION] = DECODER_DEFAULT_CV29_CONFIG;
 
-    // --- Default Function Mapping ---
+    // --- Default Function Mapping (Proprietary System) ---
     // This setup creates a direction-dependent headlight on F0.
 
     // LF 0: Headlight Fwd (Steady, Full Brightness, Output 0)

@@ -67,6 +67,8 @@ void setup() {
   // Sync our CVManager state with the DCC library's internal state
   dcc.setCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS, cvManager.readCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS));
   dcc.setCV(CV_MANUFACTURER_ID, cvManager.readCV(CV_MANUFACTURER_ID));
+  dcc.setCV(CV_DECODER_VERSION_ID, cvManager.readCV(CV_DECODER_VERSION_ID));
+  dcc.setCV(CV_DECODER_CONFIGURATION, cvManager.readCV(CV_DECODER_CONFIGURATION));
 
   // Apply motor settings from CVs
   notifyCVChange(CV_START_VOLTAGE, cvManager.readCV(CV_START_VOLTAGE));
