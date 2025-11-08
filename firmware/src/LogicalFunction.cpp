@@ -36,6 +36,13 @@ void LogicalFunction::setDimmed(bool dimmed) {
     }
 }
 
+bool LogicalFunction::isDimmed() const {
+    if (_effect) {
+        return _effect->isDimmed();
+    }
+    return false;
+}
+
 void LogicalFunction::update(uint32_t delta_ms) {
     if (!_effect) {
         return;

@@ -33,16 +33,16 @@ Dieses Dokument beschreibt die notwendigen Schritte, um einen voll funktionsfäh
 
 ## Phase 3: Implementierung von Licht- und Aux-Funktionen
 
-- [ ] **1. Kern-Infrastruktur**
-    - [ ] Implementierung der Kern-Klassen für physische Ausgänge und logische Funktionen.
-    - [ ] Implementierung der `LightEffect`-Basisklasse und einfacher Effekte.
-- [ ] **2. Erweiterte Effekte & Mapping**
-    - [ ] Implementierung der vollständigen, mehrstufigen Tabellenlogik für das Funktions-Mapping.
-    - [ ] Implementierung aller verbleibenden erweiterten Lichteffekte.
-    - [ ] Entwicklung einer umfassenden CV-Tabelle zur Konfiguration.
-- [ ] **3. Hilfsfunktionen**
-    - [ ] Implementierung des `SERVO_CONTROL`-Effekts.
-    - [ ] Implementierung des `SMOKE_GENERATOR`-Effekts.
+- [x] **1. Kern-Infrastruktur**
+    - [x] Implementierung der Kern-Klassen für physische Ausgänge und logische Funktionen (`PhysicalOutputManager`, `LogicalFunction`, `FunctionManager`).
+    - [x] Implementierung eines CV-basierten Lade-Mechanismus (`CVLoader`, `CVManager`).
+- [x] **2. Erweiterte Effekte & Mapping**
+    - [x] Implementierung der vollständigen, mehrstufigen Tabellenlogik für das Funktions-Mapping (CV-basiert, `CVLoader`).
+    - [x] Implementierung aller im Konzept (`LIGHT_AND_AUX_CONCEPT.MD`) vorgesehenen Lichteffekte (`Steady`, `Dimming`, `Flicker`, `Strobe`, `MarsLight`, `SoftStartStop`).
+    - [x] Entwicklung einer umfassenden CV-Tabelle zur Konfiguration (siehe `CV_MAPPING.md`).
+- [x] **3. Hilfsfunktionen**
+    - [x] Implementierung des `SERVO_CONTROL`-Effekts.
+    - [x] Implementierung des `SMOKE_GENERATOR`-Effekts.
 - [ ] **4. Werkzeuge & Verfeinerung**
     - [ ] Entwicklung eines PC-basierten Konfigurationstools.
     - [ ] Erstellung einer umfassenden Benutzerdokumentation.

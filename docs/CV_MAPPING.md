@@ -32,13 +32,21 @@ Die Struktur orientiert sich an gängigen Industriestandards (z.B. ESU, ZIMO), u
 *   **Beschleunigungs-/Bremszeit (CV 3/4):** Die aktuellen Werte in `config.h` sind `50` und `100` (Einheit: `PPS^2`). Um dies auf den NMRA-Standard (Wert * 0.25s) abzubilden, müssen die Werte in der Firmware umgerechnet werden. Die Standardwerte in der Tabelle (`20` und `40`) sind Annäherungen und können angepasst werden.
 *   **Hersteller-ID (CV 8):** Der Wert `165` ist im NMRA-Verzeichnis für "DIY and home-built decoders" reserviert und wird in der Firmware bereits verwendet.
 *   **Erweiterte Adressen (CV 17/18):** Die Implementierung erfordert die Auswertung von CV 29, um zwischen kurzer und langer Adresse umzuschalten.
-*   **Funktionsausgänge (CV 49/50):** Die Planung für ein erweitertes "Function Mapping" ist im `LIGHT_AND_AUX_CONCEPT.MD` vorgesehen. Die CVs sind hier als Platzhalter reserviert.
+*   **Funktionsausgänge (CV 49/50):** Diese CVs sind für einfache Decoder gedacht. Das hier implementierte erweiterte "Function Mapping" (siehe unten) macht sie weitgehend überflüssig. Sie werden vorerst nicht implementiert.
 
 ---
 
-## Konfiguration der Logischen Funktionen (CV 200-455)
+## Konfiguration des Erweiterten Funktions-Mappings
 
-Die logischen Funktionen werden in Blöcken von 8 CVs konfiguriert, beginnend bei CV 200. Jeder Block definiert eine Funktion, deren Effekt und die zugehörigen physischen Ausgänge.
+Das erweiterte Funktions-Mapping ist ein extrem flexibles System, das auf drei Hauptkomponenten basiert: **Logische Funktionen**, **Bedingungsvariablen** und **Mapping-Regeln**. Diese werden über dedizierte CV-Bereiche konfiguriert.
+
+### 1. Logische Funktionen (CV 200-455) - **IMPLEMENTIERT**
+
+Die logischen Funktionen definieren, *was* der Decoder tut (z.B. ein Licht einschalten, ein Servo bewegen). Es können bis zu 32 logische Funktionen konfiguriert werden. Jede Funktion belegt einen Block von 8 CVs.
+
+- **Basis-CV:** `200`
+- **Anzahl Blöcke:** `32`
+- **Blockgröße:** `8 CVs`
 
 | CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
 |---------------------|------|--------------|--------------|
@@ -63,3 +71,67 @@ Die logischen Funktionen werden in Blöcken von 8 CVs konfiguriert, beginnend be
 | 6 | **Sanftes Ein-/Ausschalten** | Einblendzeit (ms/2) | Ausblendzeit (ms/2) | Ziel-Helligkeit |
 | 7 | **Servo** | Endpunkt A (Grad) | Endpunkt B (Grad) | Bewegungsgeschwindigkeit |
 | 8 | **Rauchgenerator** | Heizung an/aus (0/1) | Lüftergeschwindigkeit | - |
+
+---
+
+### 2. Bedingungsvariablen (CV 500-627) - **IMPLEMENTIERT**
+
+Die Bedingungsvariablen definieren, *wann* etwas passieren soll. Sie prüfen den Zustand des Decoders (z.B. "Fährt der Zug vorwärts?", "Ist F1 eingeschaltet?"). Es können bis zu 32 Bedingungsvariablen konfiguriert werden. Jede Variable belegt einen Block von 4 CVs.
+
+- **Basis-CV:** `500`
+- **Anzahl Blocke:** `32`
+- **Blockgröße:** `4 CVs`
+
+| CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
+|---------------------|------|--------------|--------------|
+| **Base + 0** | **Quelle (Source)** | Die Datenquelle, die geprüft werden soll. | `1-4` |
+| Base + 1 | **Vergleichsoperator (Comparator)** | Wie die Quelle geprüft werden soll. | `1-8` |
+| Base + 2 | **Parameter** | Der Wert, mit dem verglichen wird. | `0-255` |
+| Base + 3 | (Reserviert) | | |
+
+#### Quellen (Source)
+
+| ID | Quelle | Beschreibung |
+|----|--------|--------------|
+| 1 | **Function Key** | Zustand einer Funktionstaste (F0-F28). Parameter = Tasten-Nummer. |
+| 2 | **Direction** | Fahrtrichtung des Decoders. |
+| 3 | **Speed** | Geschwindigkeit des Decoders. |
+| 4 | **Logical Function State** | Zustand einer anderen logischen Funktion. Parameter = LF ID (1-32). |
+
+#### Vergleichsoperatoren (Comparator)
+
+| ID | Operator | Beschreibung |
+|----|----------|--------------|
+| 1 | `EQ` (Equal) | Ist gleich |
+| 2 | `NEQ` (Not Equal) | Ist ungleich |
+| 3 | `GT` (Greater Than) | Ist größer als |
+| 4 | `LT` (Less Than) | Ist kleiner als |
+| 5 | `GTE` (Greater Than or Equal) | Ist größer oder gleich |
+| 6 | `LTE` (Less Than or Equal) | Ist kleiner oder gleich |
+| 7 | `BIT_AND` | Bit-weises UND ist nicht null |
+| 8 | `IS_TRUE` | Ist wahr (Wert != 0) |
+
+---
+
+### 3. Mapping-Regeln (CV 700-955) - **IMPLEMENTIERT**
+
+Die Mapping-Regeln sind das Herzstück des Systems. Sie verknüpfen die **Bedingungsvariablen** mit den **Logischen Funktionen**. Eine Regel lautet z.B.: "Wenn Bedingung 1 wahr ist UND Bedingung 2 nicht wahr ist, DANN schalte die logische Funktion 5 ein." Es können bis zu 64 Regeln konfiguriert werden. Jede Regel belegt einen Block von 4 CVs.
+
+- **Basis-CV:** `700`
+- **Anzahl Blöcke:** `64`
+- **Blockgröße:** `4 CVs`
+
+| CV (Basis + Offset) | Name | Beschreibung | Wertebereich |
+|---------------------|------|--------------|--------------|
+| **Base + 0** | **Ziel Logische Funktion ID** | ID der zu steuernden logischen Funktion (1-32). | `1-32` |
+| Base + 1 | **Positive Bedingung ID** | ID der Bedingungsvariable (1-32), die WAHR sein muss. 0 = ignoriert. | `0-32` |
+| Base + 2 | **Negative Bedingung ID** | ID der Bedingungsvariable (1-32), die FALSCH sein muss. 0 = ignoriert. | `0-32` |
+| Base + 3 | **Aktion (Action)** | Was mit der logischen Funktion geschehen soll. | `1-3` |
+
+#### Aktionen (Action)
+
+| ID | Aktion | Beschreibung |
+|----|--------|--------------|
+| 1 | `ACTIVATE` | Aktiviert die logische Funktion. |
+| 2 | `DEACTIVATE` | Deaktiviert die logische Funktion. |
+| 3 | `SET_DIMMED` | Setzt den "dimmed" Zustand der Funktion (nur für `EffectDimming`). |

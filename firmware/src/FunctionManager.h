@@ -40,6 +40,12 @@ public:
     uint16_t getSpeed() const;
     bool getConditionVariableState(uint8_t cv_id) const;
 
+    // --- Test Hooks ---
+    size_t getLogicalFunctionCount() const { return _logical_functions.size(); }
+    size_t getConditionVariableCount() const { return _condition_variables.size(); }
+    size_t getMappingRuleCount() const { return _mapping_rules.size(); }
+    LogicalFunction* getLogicalFunction(size_t index) { return _logical_functions[index]; }
+
 
 private:
     void evaluateMapping();

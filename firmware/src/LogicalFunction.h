@@ -44,6 +44,7 @@ public:
      * @param dimmed True to set to dimmed, false for full brightness.
      */
     void setDimmed(bool dimmed);
+    bool isDimmed() const;
 
 private:
     Effect* _effect;

@@ -1,22 +1,23 @@
 #ifndef CV_LOADER_H
 #define CV_LOADER_H
 
+// Forward declarations
 class CVManager;
 class FunctionManager;
 class PhysicalOutputManager;
 
 /**
  * @file CVLoader.h
- * @brief Populates the FunctionManager based on settings from the CVManager.
+ * @brief Handles loading configuration from CVs into the FunctionManager.
  */
 
 class CVLoader {
 public:
     /**
-     * @brief Loads the configuration from CVs into the FunctionManager.
-     * @param cvManager The source of the CV values.
-     * @param functionManager The target for the created functions, rules, etc.
-     * @param physicalOutputManager The source for physical output objects.
+     * @brief Reads all relevant CVs and populates the FunctionManager.
+     * @param cvManager The CVManager instance to read from.
+     * @param functionManager The FunctionManager instance to populate.
+     * @param physicalOutputManager The PhysicalOutputManager for linking outputs.
      */
     static void loadCvToFunctionManager(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager);
 

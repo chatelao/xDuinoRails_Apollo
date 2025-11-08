@@ -3,195 +3,189 @@
 #include <cstdint>
 #include <ArduinoFake.h>
 
-// =====================================================================================
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Mocks & Includes
-// =====================================================================================
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 using namespace fakeit;
 
 // Global state to mock effect activation for FunctionManager test.
 bool effect_is_active = false;
 
-// Custom mock for LightEffect used only in the FunctionManager test.
-class MockEffect : public LightEffect {
+// Custom mock for Effect used only in the FunctionManager test.
+class MockEffect : public Effect {
 public:
-    void update(uint32_t delta_ms) override {}
-    uint8_t getPwmValue() override { return 0; }
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override {}
     void setActive(bool active) override {
         effect_is_active = active;
     }
 };
 
-
 // Include the source files directly to resolve linker errors in the test environment.
-// All required source files are included here once for all tests.
-#include "LightEffect.cpp"
+#include "Effect.cpp"
 #include "PhysicalOutput.cpp"
 #include "LogicalFunction.cpp"
-// FunctionManager depends on FunctionMapping, so include it first.
 #include "FunctionMapping.cpp"
 #include "FunctionManager.cpp"
-// CV related classes are last as they depend on the others.
 #include "CVManager.cpp"
 #include "PhysicalOutputManager.cpp"
 #include "CVLoader.cpp"
 
-
-// =====================================================================================
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Test Cases
-// =====================================================================================
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-// A mock delta time for update calls.
 const uint32_t DELTA_MS = 16;
+std::vector<PhysicalOutput*> mock_outputs;
+Mock<PhysicalOutput> mock_output1(1);
+Mock<PhysicalOutput> mock_output2(2);
+
 
 void setUp(void) {
-    // Reset mocks before each test
     ArduinoFakeReset();
     effect_is_active = false;
+    mock_outputs.clear();
+    mock_outputs.push_back(&mock_output1.get());
+    mock_outputs.push_back(&mock_output2.get());
+    When(Method(mock_output1, setValue)).AlwaysReturn();
+    When(Method(mock_output2, setValue)).AlwaysReturn();
 }
 
-void tearDown(void) {
-    // Clean up code, optional.
-}
+void tearDown(void) {}
 
-/**
- * @brief Test the EffectSteady class.
- */
+// Summary: Test the EffectSteady class.
 void test_effect_steady() {
     EffectSteady effect(128);
     effect.setActive(false);
-    TEST_ASSERT_EQUAL(0, effect.getPwmValue());
+    effect.update(DELTA_MS, mock_outputs);
+    Verify(Method(mock_output1, setValue).Using(0)).Once();
+
     effect.setActive(true);
-    effect.update(DELTA_MS);
-    TEST_ASSERT_EQUAL(128, effect.getPwmValue());
+    effect.update(DELTA_MS, mock_outputs);
+    Verify(Method(mock_output1, setValue).Using(128)).Once();
 }
 
-/**
- * @brief Test the EffectDimming class.
- */
+// Summary: Test the EffectDimming class.
 void test_effect_dimming() {
     EffectDimming effect(255, 80);
-    effect.setActive(false);
-    TEST_ASSERT_EQUAL(0, effect.getPwmValue());
     effect.setActive(true);
     effect.setDimmed(false);
-    effect.update(DELTA_MS);
-    TEST_ASSERT_EQUAL(255, effect.getPwmValue());
+    effect.update(DELTA_MS, mock_outputs);
+    Verify(Method(mock_output1, setValue).Using(255)).Once();
+
     effect.setDimmed(true);
-    effect.update(DELTA_MS);
-    TEST_ASSERT_EQUAL(80, effect.getPwmValue());
+    effect.update(DELTA_MS, mock_outputs);
+    Verify(Method(mock_output1, setValue).Using(80)).Once();
 }
 
-/**
- * @brief Test activating and deactivating a LogicalFunction.
- */
+// Summary: Test activating and deactivating a LogicalFunction.
 void test_logical_function_activation() {
     When(Method(ArduinoFake(), pinMode)).AlwaysReturn();
     When(Method(ArduinoFake(), analogWrite)).AlwaysReturn();
 
-    PhysicalOutput output(1);
-    EffectSteady* effect = new EffectSteady(200);
+    PhysicalOutput output(1, PhysicalOutputType::PWM_LOW_SIDE);
+    Effect* effect = new EffectSteady(200);
     LogicalFunction func(effect);
     func.addOutput(&output);
 
-    // When inactive, output should be 0.
     func.setActive(false);
     func.update(16);
     Verify(Method(ArduinoFake(), analogWrite).Using(1, 0)).Once();
 
-    // When active, output should be the effect's value.
     func.setActive(true);
     func.update(16);
     Verify(Method(ArduinoFake(), analogWrite).Using(1, 200)).Once();
 }
 
-/**
- * @brief Test the strobe effect timing.
- */
+// Summary: Test the strobe effect timing.
 void test_effect_strobe() {
-    // 10Hz strobe with 25% duty cycle = 100ms period, 25ms on time.
-    EffectStrobe effect(10, 25, 255);
+    EffectStrobe effect(10, 25, 255); // 10Hz, 25% duty cycle -> 100ms period, 25ms on time
     effect.setActive(true);
 
-    effect.update(10); // t=10ms
-    TEST_ASSERT_EQUAL(255, effect.getPwmValue());
-    effect.update(15); // t=25ms
-    TEST_ASSERT_EQUAL(0, effect.getPwmValue());
-    effect.update(75); // t=100ms
-    TEST_ASSERT_EQUAL(255, effect.getPwmValue());
+    effect.update(10, mock_outputs);
+    Verify(Method(mock_output1, setValue).Using(255)).Once();
+
+    effect.update(15, mock_outputs); // Total elapsed = 25ms
+    Verify(Method(mock_output1, setValue).Using(0)).Once();
+
+    effect.update(75, mock_outputs); // Total elapsed = 100ms
+    Verify(Method(mock_output1, setValue).Using(255)).Twice();
 }
 
-/**
- * @brief Test the soft start/stop fade timing.
- */
+// Summary: Test the soft start/stop fade timing.
 void test_effect_soft_start_stop() {
-    // 100ms fade in, 50ms fade out, target 200.
-    EffectSoftStartStop effect(100, 50, 200);
+    EffectSoftStartStop effect(100, 50, 200); // 100ms fade in, 50ms fade out, target 200
 
-    // Test fade in
     effect.setActive(true);
-    effect.update(50); // Halfway through fade in
-    TEST_ASSERT_EQUAL(100, effect.getPwmValue());
-    effect.update(50); // Fully faded in
-    TEST_ASSERT_EQUAL(200, effect.getPwmValue());
+    effect.update(50, mock_outputs); // Halfway through fade in
+    Verify(Method(mock_output1, setValue).Using(100)).Once();
+    effect.update(50, mock_outputs); // Fully faded in
+    Verify(Method(mock_output1, setValue).Using(200)).Once();
 
-    // Test fade out
     effect.setActive(false);
-    effect.update(25); // Halfway through fade out
-    TEST_ASSERT_EQUAL(100, effect.getPwmValue());
-    effect.update(25); // Fully faded out
-    TEST_ASSERT_EQUAL(0, effect.getPwmValue());
+    effect.update(25, mock_outputs); // Halfway through fade out
+    Verify(Method(mock_output1, setValue).Using(100)).Twice();
+    effect.update(25, mock_outputs); // Fully faded out
+    Verify(Method(mock_output1, setValue).Using(0)).Once();
 }
 
-/**
- * @brief Test a simple mapping rule in the FunctionManager.
- */
+// Summary: Test a simple mapping rule in the FunctionManager.
 void test_manager_mapping_rule() {
     FunctionManager manager;
     manager.addLogicalFunction(new LogicalFunction(new MockEffect()));
 
-    // Rule: F1 ON -> Activate Logical Function 0
     ConditionVariable cv;
     cv.id = 1;
-    cv.conditions.push_back({TriggerSource::FUNC_KEY, 1, TriggerComparator::IS_ON});
+    cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, 1});
     manager.addConditionVariable(cv);
 
     MappingRule rule;
     rule.target_logical_function_id = 0;
     rule.positive_conditions.push_back(1);
-    rule.action = MappingAction::TURN_ON;
+    rule.action = MappingAction::ACTIVATE;
     manager.addMappingRule(rule);
 
-    // Initial state: F1 is off, effect should be off.
     manager.update(DELTA_MS);
     TEST_ASSERT_FALSE(effect_is_active);
 
-    // Turn F1 on, update, effect should now be on.
     manager.setFunctionState(1, true);
     manager.update(DELTA_MS);
     TEST_ASSERT_TRUE(effect_is_active);
 }
 
+// Summary: Test that the CVLoader correctly configures the FunctionManager with default CVs.
+void test_cv_loader_default_headlight_config() {
+    CVManager cvManager;
+    FunctionManager functionManager;
+    PhysicalOutputManager physicalOutputManager;
+    physicalOutputManager.begin();
+    cvManager.begin();
 
-// =====================================================================================
+    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+
+    TEST_ASSERT_EQUAL(2, functionManager.getLogicalFunctionCount());
+    TEST_ASSERT_EQUAL(3, functionManager.getConditionVariableCount());
+    TEST_ASSERT_EQUAL(2, functionManager.getMappingRuleCount());
+
+    LogicalFunction* lf0 = functionManager.getLogicalFunction(0);
+    TEST_ASSERT_NOT_NULL(lf0);
+}
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Main Test Runner
-// =====================================================================================
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 void setup() {
-    delay(2000); // Required for some boards to connect the serial monitor.
+    delay(2000);
     UNITY_BEGIN();
-
-    // Run all tests
     RUN_TEST(test_effect_steady);
     RUN_TEST(test_effect_dimming);
     RUN_TEST(test_logical_function_activation);
     RUN_TEST(test_effect_strobe);
     RUN_TEST(test_effect_soft_start_stop);
     RUN_TEST(test_manager_mapping_rule);
-
+    RUN_TEST(test_cv_loader_default_headlight_config);
     UNITY_END();
 }
 
-void loop() {
-    // Do nothing.
-}
+void loop() {}
