@@ -4,6 +4,7 @@
  */
 #include <Arduino.h>
 #include "config.h"
+#include "cv_definitions.h"
 #include <XDuinoRails_MotorDriver.h>
 #include "FunctionManager.h"
 #include "CVManager.h"
@@ -73,6 +74,11 @@ void setup() {
   notifyCVChange(CV_DECELERATION_RATE, cvManager.readCV(CV_DECELERATION_RATE));
 #elif defined(PROTOCOL_MM)
   attachInterrupt(digitalPinToInterrupt(MM_SIGNAL_PIN), mm_isr, CHANGE);
+
+  // Apply motor settings from CVs
+  motor.setStartupKick(cvManager.readCV(CV_START_VOLTAGE), MOTOR_STARTUP_KICK_DURATION);
+  motor.setAcceleration(cvManager.readCV(CV_ACCELERATION_RATE) * 2.5);
+  motor.setDeceleration(cvManager.readCV(CV_DECELERATION_RATE) * 2.5);
 #endif
 }
 
