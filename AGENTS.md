@@ -15,7 +15,7 @@ Follow the most used file & code naming conventions in the project:
 - If not yet provided use “snake case”
 - Add Doxygen comments
 - Comment lines if magic numbers or complex operations are used
-- **Enums:** Vertically align all equals signs (`=`) and other important operators for readability.
+-Vertically align all **equals signs** (`=`) and **other important operators** for readability.
 
 # Testing
 Add a comment to each testcase
