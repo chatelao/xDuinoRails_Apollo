@@ -171,6 +171,64 @@ void test_cv_loader_default_headlight_config() {
     TEST_ASSERT_NOT_NULL(lf0);
 }
 
+// Summary: Test the RCN-227 "per function" mapping logic.
+void test_rcn227_per_function_mapping() {
+    CVManager cvManager;
+    FunctionManager functionManager;
+    PhysicalOutputManager physicalOutputManager;
+    physicalOutputManager.begin();
+    cvManager.begin();
+
+    // Select RCN-227 "per function" mapping
+    cvManager.writeCV(CV_FUNCTION_MAPPING_METHOD, 2);
+
+    // --- Configure a test mapping for F1 Forward ---
+    // Outputs 1 (bit 0) and 3 (bit 2) should be active. Mask = 0b00000101 = 5
+    // Blocked by function F5.
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 40);
+    uint16_t f1_fwd_base_cv = 257 + (1 * 2 + 0) * 4; // F1, Forward
+    cvManager.writeCV(f1_fwd_base_cv, 5);      // Output mask
+    cvManager.writeCV(f1_fwd_base_cv + 1, 0);  // Output mask (byte 2)
+    cvManager.writeCV(f1_fwd_base_cv + 2, 0);  // Output mask (byte 3)
+    cvManager.writeCV(f1_fwd_base_cv + 3, 5);  // Blocking function F5
+
+    // Load the configuration
+    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+
+    // --- Verification ---
+    // We expect 2 logical functions (one for each output bit).
+    TEST_ASSERT_EQUAL(2, functionManager.getLogicalFunctionCount());
+    // We expect 2 condition variables: one for (F1 & FWD), one for (F5).
+    TEST_ASSERT_EQUAL(2, functionManager.getConditionVariableCount());
+    // We expect 2 mapping rules, one for each logical function.
+    TEST_ASSERT_EQUAL(2, functionManager.getMappingRuleCount());
+
+    // --- Test Activation Logic ---
+    // Set initial state: Forward direction, F1 is OFF, F5 is OFF
+    functionManager.setDirection(DECODER_DIRECTION_FORWARD);
+    functionManager.setFunctionState(1, false);
+    functionManager.setFunctionState(5, false);
+    functionManager.update(DELTA_MS);
+    LogicalFunction* lf_out1 = functionManager.getLogicalFunction(0);
+    LogicalFunction* lf_out3 = functionManager.getLogicalFunction(1);
+    TEST_ASSERT_FALSE(lf_out1->isActive());
+    TEST_ASSERT_FALSE(lf_out3->isActive());
+
+    // Now, turn ON F1. Outputs should activate.
+    functionManager.setFunctionState(1, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf_out1->isActive());
+    TEST_ASSERT_TRUE(lf_out3->isActive());
+
+    // Now, turn ON the blocking function F5. Outputs should deactivate.
+    functionManager.setFunctionState(5, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf_out1->isActive());
+    TEST_ASSERT_FALSE(lf_out3->isActive());
+}
+
+
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Main Test Runner
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -185,6 +243,7 @@ void setup() {
     RUN_TEST(test_effect_soft_start_stop);
     RUN_TEST(test_manager_mapping_rule);
     RUN_TEST(test_cv_loader_default_headlight_config);
+    RUN_TEST(test_rcn227_per_function_mapping);
     UNITY_END();
 }
 

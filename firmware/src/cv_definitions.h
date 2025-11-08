@@ -85,4 +85,12 @@
 #define DECODER_DEFAULT_F6_MAPPING 128   // Map F6 to Output 8
 #define DECODER_DEFAULT_FUNCTION_MAPPING_METHOD 1 // Use RCN-225 standard mapping by default
 
+// --- Internal CV Base Addresses for RCN-227 Indexed Blocks ---
+// These are not real CVs but are used internally to store the paged data.
+#define RCN227_PF_BLOCK_CV_BASE 513
+#define RCN227_PO_V1_BLOCK_CV_BASE 769
+#define RCN227_PO_V2_BLOCK_CV_BASE 1025
+#define RCN227_PO_V3_BLOCK_CV_BASE 1281
+
+
 #endif // CV_DEFINITIONS_H

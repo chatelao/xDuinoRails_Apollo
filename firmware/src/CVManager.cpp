@@ -11,7 +11,8 @@ void CVManager::begin() {
 }
 
 uint8_t CVManager::readCV(uint16_t cv_number) {
-    auto it = _cv_values.find(cv_number);
+    uint16_t mapped_address = getMappedCvAddress(cv_number);
+    auto it = _cv_values.find(mapped_address);
     if (it != _cv_values.end()) {
         return it->second;
     }
@@ -19,8 +20,37 @@ uint8_t CVManager::readCV(uint16_t cv_number) {
 }
 
 void CVManager::writeCV(uint16_t cv_number, uint8_t value) {
-    _cv_values[cv_number] = value;
-    // TODO: Add call to writeCvToEeprom(cv_number, value);
+    uint16_t mapped_address = getMappedCvAddress(cv_number);
+    _cv_values[mapped_address] = value;
+    // TODO: Add call to writeCvToEeprom(mapped_address, value);
+}
+
+uint16_t CVManager::getMappedCvAddress(uint16_t cv_number) {
+    // Check if the requested CV is in the indexed access page (257-512)
+    if (cv_number >= 257 && cv_number <= 512) {
+        uint8_t cv31 = readCV(CV_INDEXED_CV_HIGH_BYTE);
+        uint8_t cv32 = readCV(CV_INDEXED_CV_LOW_BYTE);
+
+        // RCN-227 specifies CV31 must be 0 for this type of mapping
+        if (cv31 == 0) {
+            uint16_t page_offset = cv_number - 257;
+            switch (cv32) {
+                case 40: // RCN-227 "Per Function"
+                    return RCN227_PF_BLOCK_CV_BASE + page_offset;
+                case 41: // RCN-227 "Per Output" V1
+                    return RCN227_PO_V1_BLOCK_CV_BASE + page_offset;
+                case 42: // RCN-227 "Per Output" V2
+                    return RCN227_PO_V2_BLOCK_CV_BASE + page_offset;
+                case 43: // RCN-227 "Per Output" V3
+                    return RCN227_PO_V3_BLOCK_CV_BASE + page_offset;
+                default:
+                    // Not a recognized RCN-227 page, treat as a direct access
+                    break;
+            }
+        }
+    }
+    // If not in the indexed range or no mapping applies, return the original address
+    return cv_number;
 }
 
 void CVManager::setDefaultCVs() {

@@ -38,6 +38,15 @@ enum class MappingAction : uint8_t {
     SET_DIMMED = 3,
 };
 
+enum class FunctionMappingMethod : uint8_t {
+    PROPRIETARY = 0,
+    RCN_225 = 1,
+    RCN_227_PER_FUNCTION = 2,
+    RCN_227_PER_OUTPUT_V1 = 3,
+    RCN_227_PER_OUTPUT_V2 = 4,
+    RCN_227_PER_OUTPUT_V3 = 5,
+};
+
 // --- Data Structures ---
 
 struct Condition {
