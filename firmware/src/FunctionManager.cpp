@@ -54,6 +54,13 @@ void FunctionManager::setSpeed(uint16_t speed) {
     }
 }
 
+void FunctionManager::setBinaryState(uint16_t state_number, bool value) {
+    if (m_binary_states.find(state_number) == m_binary_states.end() || m_binary_states[state_number] != value) {
+        m_binary_states[state_number] = value;
+        _state_changed = true;
+    }
+}
+
 bool FunctionManager::getFunctionState(uint8_t functionNumber) const {
     if (functionNumber < MAX_DCC_FUNCTIONS) {
         return _function_states[functionNumber];
@@ -77,6 +84,14 @@ bool FunctionManager::getConditionVariableState(uint8_t cv_id) const {
     return false; // Default to false if not found
 }
 
+bool FunctionManager::getBinaryState(uint16_t state_number) const {
+    auto it = m_binary_states.find(state_number);
+    if (it != m_binary_states.end()) {
+        return it->second;
+    }
+    return false; // Default to false if not found
+}
+
 void FunctionManager::reset() {
     // Clear all configuration vectors
     for (auto lf : _logical_functions) {
@@ -86,6 +101,7 @@ void FunctionManager::reset() {
     _condition_variables.clear();
     _mapping_rules.clear();
     _cv_states.clear();
+    m_binary_states.clear();
 
     // Reset state variables
     for (int i = 0; i < MAX_DCC_FUNCTIONS; ++i) {

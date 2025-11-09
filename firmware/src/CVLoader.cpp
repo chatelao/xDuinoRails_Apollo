@@ -27,10 +27,12 @@ void CVLoader::loadCvToFunctionManager(CVManager& cvManager, FunctionManager& fu
             parseRcn227PerOutputV2(cvManager, functionManager, physicalOutputManager);
             break;
         case FunctionMappingMethod::PROPRIETARY:
-        case FunctionMappingMethod::RCN_227_PER_OUTPUT_V3:
         default:
             // Do nothing for unsupported or proprietary mapping methods yet
             return;
+        case FunctionMappingMethod::RCN_227_PER_OUTPUT_V3:
+            parseRcn227PerOutputV3(cvManager, functionManager, physicalOutputManager);
+            break;
     }
 }
 
@@ -74,6 +76,94 @@ void CVLoader::parseRcn225(CVManager& cvManager, FunctionManager& functionManage
                 MappingRule rule;
                 rule.target_logical_function_id = lf_idx;
                 rule.positive_conditions.push_back(cv.id);
+                rule.action = MappingAction::ACTIVATE;
+                functionManager.addMappingRule(rule);
+            }
+        }
+    }
+}
+
+void CVLoader::parseRcn227PerOutputV3(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager) {
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 43);
+
+    const int num_outputs = 32;
+
+    for (int output_num = 0; output_num < num_outputs; ++output_num) {
+        LogicalFunction* lf = nullptr;
+        uint16_t base_cv = 257 + (output_num * 8);
+
+        std::vector<uint8_t> activating_cv_ids;
+        std::vector<uint8_t> blocking_cv_ids;
+
+        // Pass 1: Process direction-dependent function keys (first 4 CVs)
+        for (int i = 0; i < 4; ++i) {
+            uint8_t cv_value = cvManager.readCV(base_cv + i);
+            if (cv_value == 255) continue;
+
+            uint8_t func_num = cv_value & 0x3F;
+            uint8_t dir_bits = (cv_value >> 6) & 0x03;
+            bool is_blocking = (dir_bits == 0x03);
+
+            ConditionVariable cv;
+            cv.id = 700 + (output_num * 8) + i; // Unique ID
+            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, func_num});
+
+            if (dir_bits == 0x01) { // Forward
+                cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_FORWARD});
+            } else if (dir_bits == 0x02) { // Reverse
+                cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, DECODER_DIRECTION_REVERSE});
+            }
+            functionManager.addConditionVariable(cv);
+
+            if (is_blocking) {
+                blocking_cv_ids.push_back(cv.id);
+            } else {
+                activating_cv_ids.push_back(cv.id);
+            }
+        }
+
+        // Pass 2: Process direction-independent byte-pairs (second 4 CVs)
+        for (int i = 0; i < 2; ++i) {
+            uint8_t cv_high = cvManager.readCV(base_cv + 4 + (i * 2));
+            uint8_t cv_low = cvManager.readCV(base_cv + 5 + (i * 2));
+
+            if (cv_high == 255 && cv_low == 255) continue;
+
+            bool is_blocking = (cv_high & 0x80) != 0;
+            uint16_t value = ((cv_high & 0x7F) << 8) | cv_low;
+
+            ConditionVariable cv;
+            cv.id = 700 + (output_num * 8) + 4 + i; // Unique ID
+
+            if (value <= 68) { // It's a function key
+                cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)value});
+            } else { // It's a binary state
+                cv.conditions.push_back({TriggerSource::BINARY_STATE, TriggerComparator::IS_TRUE, (uint8_t)(value - 69)});
+            }
+            functionManager.addConditionVariable(cv);
+
+            if (is_blocking) {
+                blocking_cv_ids.push_back(cv.id);
+            } else {
+                activating_cv_ids.push_back(cv.id);
+            }
+        }
+
+
+        // If there are any activating conditions, create the LogicalFunction and MappingRules
+        if (!activating_cv_ids.empty()) {
+            lf = new LogicalFunction(new EffectSteady(255));
+            lf->addOutput(physicalOutputManager.getOutputById(output_num + 1));
+            functionManager.addLogicalFunction(lf);
+            uint8_t lf_idx = functionManager.getLogicalFunctionCount() - 1;
+
+            // Create a rule for each activating condition
+            for (uint8_t activating_id : activating_cv_ids) {
+                MappingRule rule;
+                rule.target_logical_function_id = lf_idx;
+                rule.positive_conditions.push_back(activating_id);
+                rule.negative_conditions = blocking_cv_ids; // All blocking conditions apply to each rule
                 rule.action = MappingAction::ACTIVATE;
                 functionManager.addMappingRule(rule);
             }

@@ -33,12 +33,14 @@ public:
     void setFunctionState(uint8_t functionNumber, bool functionState);
     void setDirection(DecoderDirection direction);
     void setSpeed(uint16_t speed);
+    void setBinaryState(uint16_t state_number, bool value);
 
     // --- State Getter Methods (for evaluation) ---
     bool getFunctionState(uint8_t functionNumber) const;
     DecoderDirection getDirection() const;
     uint16_t getSpeed() const;
     bool getConditionVariableState(uint8_t cv_id) const;
+    bool getBinaryState(uint16_t state_number) const;
 
     // --- Test Hooks ---
     void reset(); // Clear all configuration
@@ -59,6 +61,7 @@ private:
     bool _function_states[MAX_DCC_FUNCTIONS] = {false};
     DecoderDirection _direction = DECODER_DIRECTION_FORWARD;
     uint16_t _speed = 0;
+    std::map<uint16_t, bool> m_binary_states;
     std::map<uint8_t, bool> _cv_states; // Cache for evaluated ConditionVariable states
     bool _state_changed = true; // Flag to trigger re-evaluation
 };

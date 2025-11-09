@@ -17,6 +17,7 @@ enum class TriggerSource : uint8_t {
     DIRECTION = 2,
     SPEED = 3,
     LOGICAL_FUNC_STATE = 4,
+    BINARY_STATE = 5,
 };
 
 enum class TriggerComparator : uint8_t {
