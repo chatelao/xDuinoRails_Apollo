@@ -16,9 +16,9 @@ XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_
 FunctionManager functionManager;
 CVManager cvManager;
 PhysicalOutputManager physicalOutputManager;
+ProtocolManager protocolManager(cvManager);
 
 
-#if defined(PROTOCOL_DCC)
 // --- DCC-Specific Includes and Objects ---
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 #include <NmraDcc.h>
@@ -27,12 +27,6 @@ PhysicalOutputManager physicalOutputManager;
 
 NmraDcc dcc;
 
-// --- DCC Callback Prototypes ---
-void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps);
-void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState);
-void notifyCVChange(uint16_t CV, uint8_t Value);
-
-#elif defined(PROTOCOL_MM)
 // --- MM-Specific Includes and Objects ---
 #include <MaerklinMotorola.h>
 
@@ -44,7 +38,13 @@ MaerklinMotorola MM(MM_SIGNAL_PIN);
 void mm_isr() {
   MM.PinChange();
 }
-#endif
+
+
+// --- DCC Callback Prototypes ---
+void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps);
+void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState);
+void notifyCVChange(uint16_t CV, uint8_t Value);
+void notifyDccMsg(DCC_MSG *p);
 
 
 void setup() {
@@ -52,6 +52,7 @@ void setup() {
   motor.begin();
   cvManager.begin();
   physicalOutputManager.begin();
+  protocolManager.begin();
 
   // --- Load Configuration ---
   // The CVLoader reads from the CVManager and populates the FunctionManager
@@ -59,10 +60,10 @@ void setup() {
   CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
 
   // --- Protocol-Specific Setup ---
-#if defined(PROTOCOL_DCC)
   dcc.pin(DCC_SIGNAL_PIN, false);
   dcc.init(MAN_ID_DIY, 1, FLAGS_MY_ADDRESS_ONLY, 0);
   dcc.setCVWriteCallback(notifyCVChange);
+  dcc.setDccMsgCallback(notifyDccMsg);
 
   // Sync our CVManager state with the DCC library's internal state
   dcc.setCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS, cvManager.readCV(CV_MULTIFUNCTION_PRIMARY_ADDRESS));
@@ -70,18 +71,12 @@ void setup() {
   dcc.setCV(CV_DECODER_VERSION_ID, cvManager.readCV(CV_DECODER_VERSION_ID));
   dcc.setCV(CV_DECODER_CONFIGURATION, cvManager.readCV(CV_DECODER_CONFIGURATION));
 
+  attachInterrupt(digitalPinToInterrupt(MM_SIGNAL_PIN), mm_isr, CHANGE);
+
   // Apply motor settings from CVs
   notifyCVChange(CV_START_VOLTAGE, cvManager.readCV(CV_START_VOLTAGE));
   notifyCVChange(CV_ACCELERATION_RATE, cvManager.readCV(CV_ACCELERATION_RATE));
   notifyCVChange(CV_DECELERATION_RATE, cvManager.readCV(CV_DECELERATION_RATE));
-#elif defined(PROTOCOL_MM)
-  attachInterrupt(digitalPinToInterrupt(MM_SIGNAL_PIN), mm_isr, CHANGE);
-
-  // Apply motor settings from CVs
-  motor.setStartupKick(cvManager.readCV(CV_START_VOLTAGE), MOTOR_STARTUP_KICK_DURATION);
-  motor.setAcceleration(cvManager.readCV(CV_ACCELERATION_RATE) * 2.5);
-  motor.setDeceleration(cvManager.readCV(CV_DECELERATION_RATE) * 2.5);
-#endif
 }
 
 void loop() {
@@ -90,34 +85,49 @@ void loop() {
   uint32_t delta_ms = current_millis - last_millis;
   last_millis = current_millis;
 
-#if defined(PROTOCOL_DCC)
-  dcc.process();
-#elif defined(PROTOCOL_MM)
-  MM.Parse();
-  MaerklinMotorolaData* data = MM.GetData();
-  if (data && !data->IsMagnet && data->Address == MM_ADDRESS) {
-    functionManager.setFunctionState(0, data->Function);
+  switch (protocolManager.getActiveProtocol()) {
+    case Protocol::DCC:
+      dcc.process();
+      break;
+    case Protocol::MM:
+      MM.Parse();
+      MaerklinMotorolaData* data = MM.GetData();
+      if (data && !data->IsMagnet && data->Address == MM_ADDRESS) {
+        protocolManager.notifyMmPacket();
+        functionManager.setFunctionState(0, data->Function);
 
-    if (data->ChangeDir) {
-      motor.setDirection(!motor.getDirection());
-    } else if (data->Stop) {
-      motor.setTargetSpeed(0);
-    } else {
-      uint8_t pps = map(data->Speed, 0, 14, 0, 200);
-      motor.setTargetSpeed(pps);
-    }
-    // Update function manager with MM state
-    functionManager.setDirection(motor.getDirection() ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
-    functionManager.setSpeed(motor.getTargetSpeed());
+        if (data->ChangeDir) {
+          motor.setDirection(!motor.getDirection());
+        } else if (data->Stop) {
+          motor.setTargetSpeed(0);
+        } else {
+          uint8_t pps = map(data->Speed, 0, 14, 0, 200);
+          motor.setTargetSpeed(pps);
+        }
+        // Update function manager with MM state
+        functionManager.setDirection(motor.getDirection() ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
+        functionManager.setSpeed(motor.getTargetSpeed());
+      }
+      break;
+    case Protocol::UNDECIDED:
+      dcc.process();
+      MM.Parse();
+      MaerklinMotorolaData* mm_data = MM.GetData();
+      if (mm_data && !mm_data->IsMagnet) {
+        protocolManager.notifyMmPacket();
+      }
+      break;
   }
-#endif
 
   motor.update();
   functionManager.update(delta_ms);
 }
 
+void notifyDccMsg(DCC_MSG *p) {
+    protocolManager.notifyDccPacket();
+}
+
 // --- DCC Callback Implementations ---
-#if defined(PROTOCOL_DCC)
 void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
   if (Addr == dcc.getAddr()) {
     bool is_forward = (Dir == DCC_DIR_FWD);
@@ -174,4 +184,3 @@ void notifyCVChange(uint16_t CV, uint8_t Value) {
         // but that's a complex operation. For now, motor CVs are live-updated.
     }
 }
-#endif

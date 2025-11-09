@@ -20,7 +20,7 @@
 #define CV_PULSE_WIDTH_PERIOD 9
 #define CV_EMF_FEEDBACK_CUTOUT 10
 #define CV_PACKET_TIME_OUT 11
-#define CV_POWER_SOURCE_CONVERSION 12
+#define CV_POWER_SOURCE_LOCK 12
 #define CV_ALT_MODE_FUNC_STATUS_F1_F8 13
 #define CV_ALT_MODE_FUNC_STATUS_FL_F9_F12 14
 #define CV_DECODER_LOCK_1 15
@@ -51,6 +51,10 @@
 #define CV_USER_ID_2 106
 
 
+// CV 12 Power Source Lock Bits (RCN-200)
+#define CV12_DCC_ENABLE_BIT 0b00000001       // Bit 0: 0=DCC Enabled, 1=DCC Disabled
+#define CV12_MM_ENABLE_BIT 0b00000010        // Bit 1: 0=MM Enabled, 1=MM Disabled
+
 // CV 29 Configuration Bits (from NmraDcc.h)
 #define CV29_DIRECTION_BIT 0b00000001        // Bit 0: Locomotive Direction
 #define CV29_FL_LOCATION_BIT 0b00000010       // Bit 1: F0 Light Location
@@ -72,6 +76,7 @@
 #define DECODER_DEFAULT_EXT_ADDRESS_LSB 232 // Low byte for address 1000
 #define DECODER_DEFAULT_MANUFACTURER_ID 165 // NMRA ID for DIY/Home-built decoders
 #define DECODER_DEFAULT_CV29_CONFIG 6       // Enable 28/128 speed steps and analog mode
+#define DECODER_DEFAULT_POWER_SOURCE_LOCK 0 // Enable both DCC and MM by default
 #define DECODER_DEFAULT_VERSION_ID 1        // Firmware version 1
 
 // RCN-225 Default Function Mappings (CVs 33-46)
