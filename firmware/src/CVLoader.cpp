@@ -67,7 +67,7 @@ void CVLoader::parseRcn225(CVManager& cvManager, FunctionManager& functionManage
 
                 Effect* effect = new EffectSteady(255);
                 LogicalFunction* lf = new LogicalFunction(effect);
-                lf->addOutput(physicalOutputManager->getOutputById(physical_output_id));
+                lf->addOutput(physicalOutputManager.getOutputById(physical_output_id));
                 functionManager.addLogicalFunction(lf);
                 uint8_t lf_idx = functionManager.getLogicalFunctionCount() - 1;
 
@@ -114,7 +114,7 @@ void CVLoader::parseRcn227PerFunction(CVManager& cvManager, FunctionManager& fun
                 if ((output_mask >> output_bit) & 1) {
                     uint8_t physical_output_id = output_bit + 1;
                     LogicalFunction* lf = new LogicalFunction(new EffectSteady(255));
-                    lf->addOutput(physicalOutputManager->getOutputById(physical_output_id));
+                    lf->addOutput(physicalOutputManager.getOutputById(physical_output_id));
                     functionManager.addLogicalFunction(lf);
                     uint8_t lf_idx = functionManager.getLogicalFunctionCount() - 1;
 
@@ -147,7 +147,7 @@ void CVLoader::parseRcn227PerOutputV1(CVManager& cvManager, FunctionManager& fun
 
             if (lf == nullptr) {
                 lf = new LogicalFunction(new EffectSteady(255));
-                lf->addOutput(physicalOutputManager->getOutputById(output_num + 1));
+                lf->addOutput(physicalOutputManager.getOutputById(output_num + 1));
                 functionManager.addLogicalFunction(lf);
             }
             uint8_t lf_idx = functionManager.getLogicalFunctionCount() - 1;
@@ -202,7 +202,7 @@ void CVLoader::parseRcn227PerOutputV2(CVManager& cvManager, FunctionManager& fun
                 if (funcs[i] != 255) {
                     if (lf == nullptr) {
                         lf = new LogicalFunction(new EffectSteady(255));
-                        lf->addOutput(physicalOutputManager->getOutputById(output_num + 1));
+                        lf->addOutput(physicalOutputManager.getOutputById(output_num + 1));
                         functionManager.addLogicalFunction(lf);
                     }
                     uint8_t lf_idx = functionManager.getLogicalFunctionCount() - 1;
