@@ -66,7 +66,7 @@ This document outlines the current implementation status of the features describ
 
 - **Phase 1: Core Infrastructure & RCN-225**: Implemented. The `CVLoader` can parse RCN-225 CVs (33-46) and create the corresponding mapping rules.
 - **Phase 2: RCN-227 - System per Function**: Implemented. The `CVLoader` has a dedicated function (`parseRcn227PerFunction`) to parse the indexed CVs for this system, including the blocking function logic.
-- **Phase 3: RCN-227 - System per Output (Versions 1 & 2)**: **Not Implemented**.
+- **Phase 3: RCN-227 - System per Output (Versions 1 & 2)**: Implemented. The `CVLoader` now contains parsing logic for both the V1 (Matrix) and V2 (Function Number) systems. Unit tests have been written but could not be fully executed due to a persistent timeout issue in the native test environment.
 - **Phase 4: RCN-227 - System per Output (Version 3)**: **Not Implemented**.
 - **Phase 5: Tooling & Documentation**: **Not Implemented**. No JMRI definition file or specific user manual for RCN-227 has been created.
 

@@ -228,6 +228,117 @@ void test_rcn227_per_function_mapping() {
     TEST_ASSERT_FALSE(lf_out3->isActive());
 }
 
+// Summary: Test the RCN-227 "per output" V1 (Matrix) mapping logic.
+void test_rcn227_per_output_v1_mapping() {
+    CVManager cvManager;
+    FunctionManager functionManager;
+    PhysicalOutputManager physicalOutputManager;
+    physicalOutputManager.begin();
+    cvManager.begin();
+
+    // Select RCN-227 "per output" V1 mapping
+    cvManager.writeCV(CV_FUNCTION_MAPPING_METHOD, 3);
+
+    // --- Configure a test mapping for Output 1 ---
+    // F1 should activate it in forward direction (F1 = bit 1)
+    // F2 should activate it in reverse direction (F2 = bit 2)
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 41);
+    uint16_t out1_fwd_base = 257 + (0 * 2 + 0) * 4; // Output 1 (index 0), Forward
+    uint16_t out1_rev_base = 257 + (0 * 2 + 1) * 4; // Output 1 (index 0), Reverse
+    cvManager.writeCV(out1_fwd_base, 0b00000010); // F1
+    cvManager.writeCV(out1_rev_base, 0b00000100); // F2
+
+    // Load the configuration
+    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+
+    // --- Verification ---
+    // We expect 1 logical function for Output 1.
+    TEST_ASSERT_EQUAL(1, functionManager.getLogicalFunctionCount());
+    LogicalFunction* lf = functionManager.getLogicalFunction(0);
+    TEST_ASSERT_NOT_NULL(lf);
+
+    // --- Test Activation Logic ---
+    // State: Fwd, F1 OFF, F2 OFF -> Inactive
+    functionManager.setDirection(DECODER_DIRECTION_FORWARD);
+    functionManager.setFunctionState(1, false);
+    functionManager.setFunctionState(2, false);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf->isActive());
+
+    // State: Fwd, F1 ON -> Active
+    functionManager.setFunctionState(1, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf->isActive());
+
+    // State: Rev, F1 ON -> Inactive
+    functionManager.setDirection(DECODER_DIRECTION_REVERSE);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf->isActive());
+
+    // State: Rev, F2 ON -> Active
+    functionManager.setFunctionState(2, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf->isActive());
+}
+
+// Summary: Test the RCN-227 "per output" V2 (Function Number) mapping logic.
+void test_rcn227_per_output_v2_mapping() {
+    CVManager cvManager;
+    FunctionManager functionManager;
+    PhysicalOutputManager physicalOutputManager;
+    physicalOutputManager.begin();
+    cvManager.begin();
+
+    // Select RCN-227 "per output" V2 mapping
+    cvManager.writeCV(CV_FUNCTION_MAPPING_METHOD, 4);
+
+    // --- Configure a test mapping for Output 2 ---
+    // Should activate with F3 OR F4 in forward direction.
+    // Should be blocked by F5 (applies to both directions).
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 42);
+    uint16_t out2_fwd_base = 257 + (1 * 2 + 0) * 4; // Output 2 (index 1), Forward
+    cvManager.writeCV(out2_fwd_base, 3);     // F3
+    cvManager.writeCV(out2_fwd_base + 1, 4); // F4
+    cvManager.writeCV(out2_fwd_base + 2, 255); // Unused
+    cvManager.writeCV(out2_fwd_base + 3, 5);   // Blocking F5
+
+    // Load the configuration
+    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+
+    // --- Verification ---
+    // We expect 1 logical function for Output 2.
+    TEST_ASSERT_EQUAL(1, functionManager.getLogicalFunctionCount());
+    LogicalFunction* lf = functionManager.getLogicalFunction(0);
+    TEST_ASSERT_NOT_NULL(lf);
+
+    // --- Test Activation Logic ---
+    functionManager.setDirection(DECODER_DIRECTION_FORWARD);
+    functionManager.setFunctionState(3, false);
+    functionManager.setFunctionState(4, false);
+    functionManager.setFunctionState(5, false);
+
+    // State: Fwd, F3 OFF, F4 OFF, F5 OFF -> Inactive
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf->isActive());
+
+    // State: Fwd, F3 ON -> Active
+    functionManager.setFunctionState(3, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf->isActive());
+    functionManager.setFunctionState(3, false); // reset
+
+    // State: Fwd, F4 ON -> Active
+    functionManager.setFunctionState(4, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf->isActive());
+
+    // State: Fwd, F4 ON, F5 ON (blocking) -> Inactive
+    functionManager.setFunctionState(5, true);
+    functionManager.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf->isActive());
+}
 
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Main Test Runner
@@ -244,6 +355,8 @@ void setup() {
     RUN_TEST(test_manager_mapping_rule);
     RUN_TEST(test_cv_loader_default_headlight_config);
     RUN_TEST(test_rcn227_per_function_mapping);
+    RUN_TEST(test_rcn227_per_output_v1_mapping);
+    RUN_TEST(test_rcn227_per_output_v2_mapping);
     UNITY_END();
 }
 

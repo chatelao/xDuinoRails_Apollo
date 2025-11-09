@@ -27,3 +27,7 @@ Add a comment to each testcase
 - Build and test the software after every push on every branch
 - Provide all firmware examples with every release as assets
 - Generate the Doxygen documents during build and provide the with the release assets
+
+# Workflow
+- When working on a task from `docs/LIGHT_AND_AUX_CONCEPT.MD`, always read the concept document first to understand the context.
+- After completing a phase from the roadmap, update `docs/IMPLEMENTATION_STATUS.MD` to reflect the progress.
