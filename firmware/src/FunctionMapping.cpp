@@ -29,6 +29,9 @@ bool ConditionVariable::evaluate(const FunctionManager& manager) const {
             // This would require access to the logical functions, which is a potential future enhancement.
             // For now, this is not implemented.
             return false;
+        case TriggerSource::BINARY_STATE:
+            source_value = manager.getBinaryState(c.parameter);
+            break;
     }
 
     switch (c.comparator) {

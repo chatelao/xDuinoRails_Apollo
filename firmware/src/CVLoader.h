@@ -41,6 +41,11 @@ private:
      * @brief Parses the RCN-227 "per output" Version 2 (Function Number) mapping.
      */
     static void parseRcn227PerOutputV2(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager);
+
+    /**
+     * @brief Parses the RCN-227 "per output" Version 3 (Function or Binary State Number) mapping.
+     */
+    static void parseRcn227PerOutputV3(CVManager& cvManager, FunctionManager& functionManager, PhysicalOutputManager& physicalOutputManager);
 };
 
 #endif // CV_LOADER_H
