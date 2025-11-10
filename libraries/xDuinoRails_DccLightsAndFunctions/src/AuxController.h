@@ -64,8 +64,20 @@ public:
  * @brief Defines the type of a physical output pin.
  */
 enum class OutputType {
-    PWM,   ///< A Pulse-Width Modulation (PWM) output, for LEDs etc.
-    SERVO  ///< A servo output.
+    PWM_LOW_SIDE,  ///< A standard PWM output, active low. Suitable for common-cathode LEDs.
+    PWM_HIGH_SIDE, ///< A PWM output that needs to be inverted, active high.
+    ON_OFF,        ///< A simple on/off digital output.
+    SERVO          ///< A servo output.
+};
+
+/**
+ * @enum BrightnessCurve
+ * @brief Defines the brightness curve for a PWM output.
+ */
+enum class BrightnessCurve {
+    LINEAR,      ///< Linear relationship between input value and output brightness.
+    LOGARITHMIC, ///< Logarithmic curve, provides finer control at lower brightness levels.
+    EXPONENTIAL  ///< Exponential curve, provides finer control at higher brightness levels.
 };
 
 /**
@@ -78,8 +90,10 @@ public:
      * @brief Construct a new Physical Output object.
      * @param pin The microcontroller pin number.
      * @param type The type of the output.
+     * @param pwm_frequency The PWM frequency in Hz (for PWM outputs).
+     * @param curve The brightness curve to use (for PWM outputs).
      */
-    PhysicalOutput(uint8_t pin, OutputType type);
+    PhysicalOutput(uint8_t pin, OutputType type, uint16_t pwm_frequency = 200, BrightnessCurve curve = BrightnessCurve::LINEAR);
 
     /**
      * @brief Attaches the output to its pin, setting pinMode or attaching servo.
@@ -101,7 +115,11 @@ public:
 private:
     uint8_t _pin;
     OutputType _type;
+    uint16_t _pwm_frequency;
+    BrightnessCurve _curve;
     Servo _servo;
+
+    uint8_t applyCurve(uint8_t value);
 };
 
 
@@ -120,8 +138,9 @@ public:
      * @brief Updates the effect's state. Called every loop.
      * @param delta_ms Time elapsed since the last update.
      * @param outputs A vector of physical outputs to control.
+     * @param controller A reference to the main AuxController to access decoder state.
      */
-    virtual void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) = 0;
+    virtual void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) = 0;
 
     /**
      * @brief Activates or deactivates the effect.
@@ -155,7 +174,7 @@ protected:
 class EffectSteady : public Effect {
 public:
     EffectSteady(uint8_t brightness) : _brightness(brightness) {}
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
 private:
     uint8_t _brightness;
 };
@@ -164,7 +183,7 @@ private:
 class EffectDimming : public Effect {
 public:
     EffectDimming(uint8_t brightness_full, uint8_t brightness_dimmed);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
     void setDimmed(bool dimmed) override;
     bool isDimmed() const override { return _is_dimmed; }
 private:
@@ -177,7 +196,7 @@ private:
 class EffectFlicker : public Effect {
 public:
     EffectFlicker(uint8_t base_brightness, uint8_t flicker_depth, uint8_t flicker_speed);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
 private:
     uint8_t _base_brightness;
     uint8_t _flicker_depth;
@@ -190,7 +209,7 @@ private:
 class EffectStrobe : public Effect {
 public:
     EffectStrobe(uint16_t strobe_frequency_hz, uint8_t duty_cycle_percent, uint8_t brightness);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
     void setActive(bool active) override;
 private:
     uint32_t _strobe_period_ms;
@@ -203,7 +222,7 @@ private:
 class EffectMarsLight : public Effect {
 public:
     EffectMarsLight(uint16_t oscillation_frequency_mhz, uint8_t peak_brightness, int8_t phase_shift_percent);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
 private:
     float _oscillation_period_ms;
     float _peak_brightness;
@@ -215,7 +234,7 @@ private:
 class EffectSoftStartStop : public Effect {
 public:
     EffectSoftStartStop(uint16_t fade_in_time_ms, uint16_t fade_out_time_ms, uint8_t target_brightness);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
     void setActive(bool active) override;
 private:
     float _fade_in_increment;
@@ -224,29 +243,92 @@ private:
     float _current_brightness;
 };
 
-/** @class EffectServo @brief Controls a servo motor, moving it between two endpoints. */
+/** @enum ServoMode @brief Defines the behavior of a servo effect. */
+enum class ServoMode {
+    LATCHING,  ///< First activation moves to endpoint B, second moves back to A.
+    MOMENTARY  ///< Moves to B while active, returns to A when inactive.
+};
+
+/**
+ * @class EffectServo
+ * @brief Controls a servo motor, moving it between two endpoints with configurable behavior.
+ */
 class EffectServo : public Effect {
 public:
-    EffectServo(uint8_t endpoint_a, uint8_t endpoint_b, uint8_t travel_speed);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    /**
+     * @brief Construct a new EffectServo object.
+     * @param endpoint_a The first endpoint in degrees.
+     * @param endpoint_b The second endpoint in degrees.
+     * @param travel_speed The speed of travel in degrees per second.
+     * @param mode The behavior of the servo (LATCHING or MOMENTARY).
+     */
+    EffectServo(uint8_t endpoint_a, uint8_t endpoint_b, uint8_t travel_speed, ServoMode mode);
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
     void setActive(bool active) override;
 private:
     uint8_t _endpoint_a;
     uint8_t _endpoint_b;
     float _speed;
+    ServoMode _mode;
     float _current_angle;
     float _target_angle;
     bool _is_at_a = true;
 };
 
-/** @class EffectSmokeGenerator @brief Controls a smoke generator with a heater and a fan. */
+/** @enum SmokeFanMode @brief Defines how the fan speed of a smoke generator is controlled. */
+enum class SmokeFanMode {
+    STATIC,     ///< The fan runs at a constant speed.
+    SPEED_SYNC  ///< The fan speed is proportional to the locomotive's speed.
+};
+
+/**
+ * @class EffectSmokeGenerator
+ * @brief Controls a smoke generator with a heater and a fan, supporting speed-synchronized smoke output.
+ */
 class EffectSmokeGenerator : public Effect {
 public:
-    EffectSmokeGenerator(bool heater_enabled, uint8_t fan_speed);
-    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override;
+    /**
+     * @brief Construct a new EffectSmokeGenerator object.
+     * @param heater_enabled True to enable the heating element.
+     * @param fan_mode The control mode for the fan (STATIC or SPEED_SYNC).
+     * @param static_fan_speed The fan speed to use in STATIC mode.
+     * @param max_fan_speed The fan speed at maximum locomotive speed in SPEED_SYNC mode.
+     */
+    EffectSmokeGenerator(bool heater_enabled, SmokeFanMode fan_mode, uint8_t static_fan_speed, uint8_t max_fan_speed);
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
 private:
     bool _heater_enabled;
-    uint8_t _fan_speed;
+    SmokeFanMode _fan_mode;
+    uint8_t _static_fan_speed;
+    uint8_t _max_fan_speed;
+};
+
+/**
+ * @class EffectNeonTube
+ * @brief Simulates the warm-up and intermittent flicker of a neon or fluorescent tube.
+ */
+class EffectNeonTube : public Effect {
+public:
+    /**
+     * @brief Construct a new EffectNeonTube object.
+     * @param warmup_time_ms The time in milliseconds for the initial warm-up flicker.
+     * @param steady_brightness The brightness of the tube when in its steady state.
+     */
+    EffectNeonTube(uint16_t warmup_time_ms, uint8_t steady_brightness);
+    void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs, const AuxController& controller) override;
+    void setActive(bool active) override;
+private:
+    enum class State {
+        OFF,
+        WARMING_UP,
+        STEADY,
+        FLICKERING
+    };
+    State _state = State::OFF;
+    uint16_t _warmup_time_ms;
+    uint8_t _steady_brightness;
+    uint32_t _timer;
+    uint32_t _flicker_timer;
 };
 
 
@@ -275,8 +357,9 @@ public:
     /**
      * @brief Updates the function's state and its physical outputs.
      * @param delta_ms Time elapsed since the last update.
+     * @param controller A reference to the main AuxController to access decoder state.
      */
-    void update(uint32_t delta_ms);
+    void update(uint32_t delta_ms, const AuxController& controller);
 
     /**
      * @brief Activates or deactivates the function's effect.
@@ -388,9 +471,11 @@ public:
     /**
      * @brief Adds and initializes a physical output. Must be called for each output pin in setup().
      * @param pin The microcontroller pin number.
-     * @param type The type of the output (PWM or SERVO).
+     * @param type The type of the output.
+     * @param pwm_frequency The PWM frequency in Hz (for PWM outputs). Defaults to 200 Hz.
+     * @param curve The brightness curve to use (for PWM outputs). Defaults to LINEAR.
      */
-    void addPhysicalOutput(uint8_t pin, OutputType type);
+    void addPhysicalOutput(uint8_t pin, OutputType type, uint16_t pwm_frequency = 200, BrightnessCurve curve = BrightnessCurve::LINEAR);
 
     /**
      * @brief Updates the state of all logical functions and effects. Call every loop.
