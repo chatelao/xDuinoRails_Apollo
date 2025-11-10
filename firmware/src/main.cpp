@@ -7,12 +7,14 @@
 #include "cv_definitions.h"
 #include <XDuinoRails_MotorDriver.h>
 #include "CVManager.h"
-#include "AuxController.h"
+#include "CVManagerAdapter.h"
+#include <xDuinoRails_DccLightsAndFunctions.h>
 
 // --- Global Objects ---
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 CVManager cvManager;
-AuxController auxController;
+xDuinoRails::AuxController auxController;
+CVManagerAdapter cvManagerAdapter(cvManager);
 
 
 #if defined(PROTOCOL_DCC)
@@ -53,10 +55,14 @@ void setup() {
   // --- Initialization ---
   motor.begin();
   cvManager.begin();
-  auxController.begin();
+
+  auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM);
+  auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::PWM);
+  auxController.addPhysicalOutput(PO_CABIN_LIGHT, xDuinoRails::OutputType::PWM);
+  auxController.addPhysicalOutput(PO_SERVO_1, xDuinoRails::OutputType::SERVO);
 
   // --- Load Configuration ---
-  auxController.loadFromCVs(cvManager);
+  auxController.loadFromCVs(cvManagerAdapter);
 
   // --- Protocol-Specific Setup ---
 #if defined(PROTOCOL_DCC)
@@ -110,7 +116,7 @@ void loop() {
       motor.setTargetSpeed(pps);
     }
     // Update function manager with MM state
-    auxController.setDirection(motor.getDirection() ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
+    auxController.setDirection(motor.getDirection() ? xDuinoRails::DECODER_DIRECTION_FORWARD : xDuinoRails::DECODER_DIRECTION_REVERSE);
     auxController.setSpeed(motor.getTargetSpeed());
   }
 #endif
@@ -132,7 +138,7 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
     motor.setTargetSpeed(pps);
 
     // Update function manager state
-    auxController.setDirection(is_forward ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
+    auxController.setDirection(is_forward ? xDuinoRails::DECODER_DIRECTION_FORWARD : xDuinoRails::DECODER_DIRECTION_REVERSE);
     auxController.setSpeed(pps);
   }
 }
