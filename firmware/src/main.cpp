@@ -56,9 +56,9 @@ void setup() {
   motor.begin();
   cvManager.begin();
 
-  auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM);
-  auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::PWM);
-  auxController.addPhysicalOutput(PO_CABIN_LIGHT, xDuinoRails::OutputType::PWM);
+  auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM_LOW_SIDE);
+  auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::PWM_LOW_SIDE);
+  auxController.addPhysicalOutput(PO_CABIN_LIGHT, xDuinoRails::OutputType::PWM_LOW_SIDE);
   auxController.addPhysicalOutput(PO_SERVO_1, xDuinoRails::OutputType::SERVO);
 
   // --- Load Configuration ---
