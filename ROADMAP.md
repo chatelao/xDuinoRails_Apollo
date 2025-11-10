@@ -52,9 +52,9 @@ This document describes the necessary steps to develop a fully functional multi-
 - [x] **1. Standard CV Implementation**
     - [x] Refactor all CV definitions into a central `cv_definitions.h`.
     - [x] Implement all mandatory and applicable recommended CVs from RCN-225.
-- [ ] **2. Advanced Function Mapping (RCN-227)**
-    - [ ] Implement the RCN-227 function mapping as a new, selectable mode (via CV 96).
-    - [ ] The existing proprietary mapping system will be retained as a selectable alternative.
+- [x] **2. Advanced Function Mapping (RCN-227)**
+    - [x] Implement the RCN-227 function mapping as a new, selectable mode (via CV 96).
+    - [x] The existing proprietary mapping system will be retained as a selectable alternative.
 - [x] **3. Documentation Overhaul**
     - [x] Rewrite `CV_MAPPING.md` to reflect the new standardized structure.
     - [x] Translate all project documentation to English.

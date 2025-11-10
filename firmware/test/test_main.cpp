@@ -374,6 +374,108 @@ void test_rcn227_per_output_v2_mapping() {
     TEST_ASSERT_FALSE(lf->isActive());
 }
 
+/**
+ * @brief Test the RCN-227 "per output" V3 mapping with functions and binary states.
+ */
+void test_rcn227_per_output_v3_mapping() {
+    CVManager cvManager;
+    AuxController auxController;
+
+    // --- Setup ---
+    // Physical outputs need to be added before loading CVs so they can be mapped.
+    for (int i=1; i<=5; ++i) {
+        auxController.addPhysicalOutput(i, OutputType::PWM);
+    }
+
+    // Select RCN-227 "per output" V3 mapping
+    cvManager.writeCV(CV_FUNCTION_MAPPING_METHOD, 5); // 5 = RCN_227_PER_OUTPUT_V3
+
+    // Set the correct CV page
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 43);
+
+    // --- Configure CVs for Output 1 (White Light 1) ---
+    // Activates on F0 (fwd), F6 (any). Blocked by F1.
+    uint16_t out1_base = 257 + (0 * 8); // Output 1 is index 0
+    cvManager.writeCV(out1_base, 0 | 64);      // F0, forward only
+    cvManager.writeCV(out1_base + 1, 6);       // F6, any direction
+    cvManager.writeCV(out1_base + 2, 1 | 192); // F1, blocking
+
+    // --- Configure CVs for Output 5 (Binary State controlled) ---
+    // Activates on Binary State 5. Blocked by Binary State 10.
+    // Binary State 5 is value 69 + 5 = 74.
+    // Binary State 10 is value 69 + 10 = 79.
+    uint16_t out5_base = 257 + (4 * 8); // Output 5 is index 4
+    uint16_t bs5_val = 74;
+    uint16_t bs10_val_blocking = 79 | 0x8000; // MSB set for blocking
+
+    cvManager.writeCV(out5_base + 4, (bs5_val >> 8) & 0x7F);
+    cvManager.writeCV(out5_base + 5, bs5_val & 0xFF);
+    cvManager.writeCV(out5_base + 6, (bs10_val_blocking >> 8) & 0xFF);
+    cvManager.writeCV(out5_base + 7, bs10_val_blocking & 0xFF);
+
+    // Load the configuration from our mock CVs
+    auxController.loadFromCVs(cvManager);
+
+    // --- Verification ---
+    // Expect 2 logical functions: one for Output 1, one for Output 5.
+    TEST_ASSERT_EQUAL(2, auxController.getLogicalFunctionCount());
+    LogicalFunction* lf1 = auxController.getLogicalFunction(0);
+    LogicalFunction* lf5 = auxController.getLogicalFunction(1);
+    TEST_ASSERT_NOT_NULL(lf1);
+    TEST_ASSERT_NOT_NULL(lf5);
+
+    // --- Test Activation Logic: Output 1 (White Light) ---
+    // Initial state: Fwd, all funcs off -> Inactive
+    auxController.setDirection(DECODER_DIRECTION_FORWARD);
+    auxController.setFunctionState(0, false);
+    auxController.setFunctionState(1, false);
+    auxController.setFunctionState(6, false);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf1->isActive());
+
+    // State: Fwd, F0 ON -> Active
+    auxController.setFunctionState(0, true);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf1->isActive());
+
+    // State: Reverse, F0 ON -> Inactive (F0 is fwd only)
+    auxController.setDirection(DECODER_DIRECTION_REVERSE);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf1->isActive());
+
+    // State: Reverse, F6 ON -> Active (F6 is any direction)
+    auxController.setFunctionState(6, true);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf1->isActive());
+    auxController.setFunctionState(6, false); // reset
+
+    // State: Fwd, F0 ON, F1 ON (blocking) -> Inactive
+    auxController.setDirection(DECODER_DIRECTION_FORWARD);
+    auxController.setFunctionState(0, true);
+    auxController.setFunctionState(1, true);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf1->isActive());
+
+    // --- Test Activation Logic: Output 5 (Binary State) ---
+    // Initial state: all BS off -> Inactive
+    auxController.setBinaryState(5, false);
+    auxController.setBinaryState(10, false);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf5->isActive());
+
+    // State: BS 5 ON -> Active
+    auxController.setBinaryState(5, true);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_TRUE(lf5->isActive());
+
+    // State: BS 5 ON, BS 10 ON (blocking) -> Inactive
+    auxController.setBinaryState(10, true);
+    auxController.update(DELTA_MS);
+    TEST_ASSERT_FALSE(lf5->isActive());
+}
+
+
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Main Test Runner
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -395,6 +497,7 @@ void setup() {
     RUN_TEST(test_rcn227_per_function_mapping);
     RUN_TEST(test_rcn227_per_output_v1_mapping);
     RUN_TEST(test_rcn227_per_output_v2_mapping);
+    RUN_TEST(test_rcn227_per_output_v3_mapping);
     UNITY_END();
 }
 
