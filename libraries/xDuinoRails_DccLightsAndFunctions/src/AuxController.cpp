@@ -3,9 +3,10 @@
  * @brief Implements the AuxController class and all related helper classes.
  */
 #include "AuxController.h"
-#include "config.h"
 #include "cv_definitions.h"
 #include <math.h>
+
+namespace xDuinoRails {
 
 // --- PhysicalOutput ---
 
@@ -280,15 +281,9 @@ AuxController::~AuxController() {
     reset();
 }
 
-void AuxController::begin() {
-    _outputs.emplace_back(PO_HEADLIGHT_FWD, OutputType::PWM);
-    _outputs.emplace_back(PO_HEADLIGHT_REV, OutputType::PWM);
-    _outputs.emplace_back(PO_CABIN_LIGHT, OutputType::PWM);
-    _outputs.emplace_back(PO_SERVO_1, OutputType::SERVO);
-
-    for (auto& output : _outputs) {
-        output.attach();
-    }
+void AuxController::addPhysicalOutput(uint8_t pin, OutputType type) {
+    _outputs.emplace_back(pin, type);
+    _outputs.back().attach();
 }
 
 void AuxController::update(uint32_t delta_ms) {
@@ -301,27 +296,27 @@ void AuxController::update(uint32_t delta_ms) {
     }
 }
 
-void AuxController::loadFromCVs(CVManager& cvManager) {
+void AuxController::loadFromCVs(ICVAccess& cvAccess) {
     reset();
-    auto mapping_method = static_cast<FunctionMappingMethod>(cvManager.readCV(CV_FUNCTION_MAPPING_METHOD));
+    auto mapping_method = static_cast<FunctionMappingMethod>(cvAccess.readCV(CV_FUNCTION_MAPPING_METHOD));
     switch (mapping_method) {
         case FunctionMappingMethod::RCN_225:
-            parseRcn225(cvManager);
+            parseRcn225(cvAccess);
             break;
         case FunctionMappingMethod::RCN_227_PER_FUNCTION:
-            parseRcn227PerFunction(cvManager);
+            parseRcn227PerFunction(cvAccess);
             break;
         case FunctionMappingMethod::RCN_227_PER_OUTPUT_V1:
-            parseRcn227PerOutputV1(cvManager);
+            parseRcn227PerOutputV1(cvAccess);
             break;
         case FunctionMappingMethod::RCN_227_PER_OUTPUT_V2:
-            parseRcn227PerOutputV2(cvManager);
+            parseRcn227PerOutputV2(cvAccess);
             break;
         case FunctionMappingMethod::PROPRIETARY:
         default:
             return;
         case FunctionMappingMethod::RCN_227_PER_OUTPUT_V3:
-            parseRcn227PerOutputV3(cvManager);
+            parseRcn227PerOutputV3(cvAccess);
             break;
     }
 }
@@ -429,11 +424,11 @@ PhysicalOutput* AuxController::getOutputById(uint8_t id) {
     return (id < _outputs.size()) ? &_outputs[id] : nullptr;
 }
 
-void AuxController::parseRcn225(CVManager& cvManager) {
+void AuxController::parseRcn225(ICVAccess& cvAccess) {
     const int num_mapping_cvs = CV_OUTPUT_LOCATION_CONFIG_END - CV_OUTPUT_LOCATION_CONFIG_START + 1;
     for (int i = 0; i < num_mapping_cvs; ++i) {
         uint16_t cv_addr = CV_OUTPUT_LOCATION_CONFIG_START + i;
-        uint8_t mapping_mask = cvManager.readCV(cv_addr);
+        uint8_t mapping_mask = cvAccess.readCV(cv_addr);
         if (mapping_mask == 0) continue;
 
         ConditionVariable cv;
@@ -466,9 +461,9 @@ void AuxController::parseRcn225(CVManager& cvManager) {
     }
 }
 
-void AuxController::parseRcn227PerOutputV3(CVManager& cvManager) {
-    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 43);
+void AuxController::parseRcn227PerOutputV3(ICVAccess& cvAccess) {
+    cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 43);
     const int num_outputs = 32;
     for (int output_num = 0; output_num < num_outputs; ++output_num) {
         LogicalFunction* lf = nullptr;
@@ -476,7 +471,7 @@ void AuxController::parseRcn227PerOutputV3(CVManager& cvManager) {
         std::vector<uint8_t> activating_cv_ids, blocking_cv_ids;
 
         for (int i = 0; i < 4; ++i) {
-            uint8_t cv_value = cvManager.readCV(base_cv + i);
+            uint8_t cv_value = cvAccess.readCV(base_cv + i);
             if (cv_value == 255) continue;
             uint8_t func_num = cv_value & 0x3F;
             uint8_t dir_bits = (cv_value >> 6) & 0x03;
@@ -491,8 +486,8 @@ void AuxController::parseRcn227PerOutputV3(CVManager& cvManager) {
         }
 
         for (int i = 0; i < 2; ++i) {
-            uint8_t cv_high = cvManager.readCV(base_cv + 4 + (i * 2));
-            uint8_t cv_low = cvManager.readCV(base_cv + 5 + (i * 2));
+            uint8_t cv_high = cvAccess.readCV(base_cv + 4 + (i * 2));
+            uint8_t cv_low = cvAccess.readCV(base_cv + 5 + (i * 2));
             if (cv_high == 255 && cv_low == 255) continue;
             bool is_blocking = (cv_high & 0x80) != 0;
             uint16_t value = ((cv_high & 0x7F) << 8) | cv_low;
@@ -521,17 +516,17 @@ void AuxController::parseRcn227PerOutputV3(CVManager& cvManager) {
     }
 }
 
-void AuxController::parseRcn227PerFunction(CVManager& cvManager) {
-    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 40);
+void AuxController::parseRcn227PerFunction(ICVAccess& cvAccess) {
+    cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 40);
 
     const int num_functions = 32;
 
     for (int func_num = 0; func_num < num_functions; ++func_num) {
         for (int dir = 0; dir < 2; ++dir) {
             uint16_t base_cv = 257 + (func_num * 2 + dir) * 4;
-            uint32_t output_mask = (uint32_t)cvManager.readCV(base_cv + 2) << 16 | (uint32_t)cvManager.readCV(base_cv + 1) << 8 | cvManager.readCV(base_cv);
-            uint8_t blocking_func_num = cvManager.readCV(base_cv + 3);
+            uint32_t output_mask = (uint32_t)cvAccess.readCV(base_cv + 2) << 16 | (uint32_t)cvAccess.readCV(base_cv + 1) << 8 | cvAccess.readCV(base_cv);
+            uint8_t blocking_func_num = cvAccess.readCV(base_cv + 3);
 
             if (output_mask == 0) continue;
 
@@ -570,9 +565,9 @@ void AuxController::parseRcn227PerFunction(CVManager& cvManager) {
     }
 }
 
-void AuxController::parseRcn227PerOutputV1(CVManager& cvManager) {
-    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 41);
+void AuxController::parseRcn227PerOutputV1(ICVAccess& cvAccess) {
+    cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 41);
 
     const int num_outputs = 24;
 
@@ -581,7 +576,7 @@ void AuxController::parseRcn227PerOutputV1(CVManager& cvManager) {
 
         for (int dir = 0; dir < 2; ++dir) {
             uint16_t base_cv = 257 + (output_num * 2 + dir) * 4;
-            uint32_t func_mask = (uint32_t)cvManager.readCV(base_cv + 3) << 24 | (uint32_t)cvManager.readCV(base_cv + 2) << 16 | (uint32_t)cvManager.readCV(base_cv + 1) << 8 | cvManager.readCV(base_cv);
+            uint32_t func_mask = (uint32_t)cvAccess.readCV(base_cv + 3) << 24 | (uint32_t)cvAccess.readCV(base_cv + 2) << 16 | (uint32_t)cvAccess.readCV(base_cv + 1) << 8 | cvAccess.readCV(base_cv);
 
             if (func_mask == 0) continue;
 
@@ -611,9 +606,9 @@ void AuxController::parseRcn227PerOutputV1(CVManager& cvManager) {
     }
 }
 
-void AuxController::parseRcn227PerOutputV2(CVManager& cvManager) {
-    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
-    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 42);
+void AuxController::parseRcn227PerOutputV2(ICVAccess& cvAccess) {
+    cvAccess.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvAccess.writeCV(CV_INDEXED_CV_LOW_BYTE, 42);
 
     const int num_outputs = 32;
 
@@ -623,11 +618,11 @@ void AuxController::parseRcn227PerOutputV2(CVManager& cvManager) {
         for (int dir = 0; dir < 2; ++dir) {
             uint16_t base_cv = 257 + (output_num * 2 + dir) * 4;
             uint8_t funcs[] = {
-                cvManager.readCV(base_cv),
-                cvManager.readCV(base_cv + 1),
-                cvManager.readCV(base_cv + 2)
+                cvAccess.readCV(base_cv),
+                cvAccess.readCV(base_cv + 1),
+                cvAccess.readCV(base_cv + 2)
             };
-            uint8_t blocking_func = cvManager.readCV(base_cv + 3);
+            uint8_t blocking_func = cvAccess.readCV(base_cv + 3);
 
             uint8_t blocking_cv_id = 0;
             if (blocking_func != 255) {
@@ -663,4 +658,5 @@ void AuxController::parseRcn227PerOutputV2(CVManager& cvManager) {
             }
         }
     }
+}
 }

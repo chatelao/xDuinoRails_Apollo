@@ -7,17 +7,18 @@
  * control system. This includes physical output management, the effect system,
  * logical functions, and the CV-based function mapping logic.
  */
-#ifndef AUX_CONTROLLER_H
-#define AUX_CONTROLLER_H
+#ifndef XDRAILS_DCC_LIGHTS_AND_FUNCTIONS_H
+#define XDRAILS_DCC_LIGHTS_AND_FUNCTIONS_H
 
 #include <Arduino.h>
 #include <vector>
 #include <Servo.h>
 #include <cstdint>
 #include <map>
-#include "CVManager.h"
 
 #define MAX_DCC_FUNCTIONS 29
+
+namespace xDuinoRails {
 
 /**
  * @enum DecoderDirection
@@ -30,6 +31,31 @@ enum DecoderDirection {
 
 // --- Forward Declarations ---
 class AuxController;
+
+/**
+ * @class ICVAccess
+ * @brief Abstract interface for accessing Configuration Variables (CVs).
+ *
+ * This class defines the contract for reading and writing CVs, allowing the
+ * AuxController to be independent of the specific CV management implementation.
+ */
+class ICVAccess {
+public:
+    virtual ~ICVAccess() {}
+    /**
+     * @brief Reads a CV value.
+     * @param cv_number The CV number to read.
+     * @return The 8-bit value of the CV.
+     */
+    virtual uint8_t readCV(uint16_t cv_number) = 0;
+
+    /**
+     * @brief Writes a value to a CV.
+     * @param cv_number The CV number to write to.
+     * @param value The 8-bit value to write.
+     */
+    virtual void writeCV(uint16_t cv_number, uint8_t value) = 0;
+};
 
 // --- Physical Outputs ---
 
@@ -359,8 +385,13 @@ public:
     /** @brief Destructor. Cleans up dynamically allocated resources. */
     ~AuxController();
 
-    /** @brief Initializes the controller and all physical outputs. Call once in setup(). */
-    void begin();
+    /**
+     * @brief Adds and initializes a physical output. Must be called for each output pin in setup().
+     * @param pin The microcontroller pin number.
+     * @param type The type of the output (PWM or SERVO).
+     */
+    void addPhysicalOutput(uint8_t pin, OutputType type);
+
     /**
      * @brief Updates the state of all logical functions and effects. Call every loop.
      * @param delta_ms Time elapsed since the last update in milliseconds.
@@ -368,9 +399,9 @@ public:
     void update(uint32_t delta_ms);
     /**
      * @brief Loads the entire function mapping configuration from CVs.
-     * @param cvManager A reference to the CVManager to read from.
+     * @param cvAccess A reference to an object that implements the ICVAccess interface.
      */
-    void loadFromCVs(CVManager& cvManager);
+    void loadFromCVs(ICVAccess& cvAccess);
 
     // --- State Update Methods ---
     /**
@@ -439,11 +470,11 @@ private:
     PhysicalOutput* getOutputById(uint8_t id);
 
     // --- CV Loading ---
-    void parseRcn225(CVManager& cvManager);
-    void parseRcn227PerFunction(CVManager& cvManager);
-    void parseRcn227PerOutputV1(CVManager& cvManager);
-    void parseRcn227PerOutputV2(CVManager& cvManager);
-    void parseRcn227PerOutputV3(CVManager& cvManager);
+    void parseRcn225(ICVAccess& cvAccess);
+    void parseRcn227PerFunction(ICVAccess& cvAccess);
+    void parseRcn227PerOutputV1(ICVAccess& cvAccess);
+    void parseRcn227PerOutputV2(ICVAccess& cvAccess);
+    void parseRcn227PerOutputV3(ICVAccess& cvAccess);
 
     std::vector<PhysicalOutput> _outputs;
     std::vector<LogicalFunction*> _logical_functions;
@@ -459,4 +490,6 @@ private:
     bool _state_changed = true;
 };
 
-#endif // AUX_CONTROLLER_H
+} // namespace xDuinoRails
+
+#endif // XDRAILS_DCC_LIGHTS_AND_FUNCTIONS_H
