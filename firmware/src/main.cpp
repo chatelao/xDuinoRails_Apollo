@@ -6,16 +6,13 @@
 #include "config.h"
 #include "cv_definitions.h"
 #include <XDuinoRails_MotorDriver.h>
-#include "FunctionManager.h"
 #include "CVManager.h"
-#include "CVLoader.h"
-#include "PhysicalOutputManager.h"
+#include "AuxController.h"
 
 // --- Global Objects ---
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
-FunctionManager functionManager;
 CVManager cvManager;
-PhysicalOutputManager physicalOutputManager;
+AuxController auxController;
 
 
 #if defined(PROTOCOL_DCC)
@@ -41,22 +38,25 @@ void notifyCVChange(uint16_t CV, uint8_t Value);
 
 MaerklinMotorola MM(MM_SIGNAL_PIN);
 
+/**
+ * @brief Interrupt Service Routine for the Märklin-Motorola signal.
+ */
 void mm_isr() {
   MM.PinChange();
 }
 #endif
 
-
+/**
+ * @brief Setup function, called once at startup.
+ */
 void setup() {
   // --- Initialization ---
   motor.begin();
   cvManager.begin();
-  physicalOutputManager.begin();
+  auxController.begin();
 
   // --- Load Configuration ---
-  // The CVLoader reads from the CVManager and populates the FunctionManager
-  // with all the configured logical functions, mapping rules, etc.
-  CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+  auxController.loadFromCVs(cvManager);
 
   // --- Protocol-Specific Setup ---
 #if defined(PROTOCOL_DCC)
@@ -84,6 +84,9 @@ void setup() {
 #endif
 }
 
+/**
+ * @brief Main loop, called repeatedly.
+ */
 void loop() {
   static uint32_t last_millis = 0;
   uint32_t current_millis = millis();
@@ -96,7 +99,7 @@ void loop() {
   MM.Parse();
   MaerklinMotorolaData* data = MM.GetData();
   if (data && !data->IsMagnet && data->Address == MM_ADDRESS) {
-    functionManager.setFunctionState(0, data->Function);
+    auxController.setFunctionState(0, data->Function);
 
     if (data->ChangeDir) {
       motor.setDirection(!motor.getDirection());
@@ -107,17 +110,20 @@ void loop() {
       motor.setTargetSpeed(pps);
     }
     // Update function manager with MM state
-    functionManager.setDirection(motor.getDirection() ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
-    functionManager.setSpeed(motor.getTargetSpeed());
+    auxController.setDirection(motor.getDirection() ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
+    auxController.setSpeed(motor.getTargetSpeed());
   }
 #endif
 
   motor.update();
-  functionManager.update(delta_ms);
+  auxController.update(delta_ms);
 }
 
 // --- DCC Callback Implementations ---
 #if defined(PROTOCOL_DCC)
+/**
+ * @brief Callback for DCC speed packets.
+ */
 void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
   if (Addr == dcc.getAddr()) {
     bool is_forward = (Dir == DCC_DIR_FWD);
@@ -126,24 +132,33 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
     motor.setTargetSpeed(pps);
 
     // Update function manager state
-    functionManager.setDirection(is_forward ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
-    functionManager.setSpeed(pps);
+    auxController.setDirection(is_forward ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE);
+    auxController.setSpeed(pps);
   }
 }
 
+/**
+ * @brief Helper function to process DCC function groups.
+ * @param start_fn The starting function number for this group.
+ * @param count The number of functions in this group.
+ * @param state_mask A bitmask of the function states.
+ */
 void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
     for (int i = 0; i < count; i++) {
         bool state = (state_mask >> i) & 0x01;
-        functionManager.setFunctionState(start_fn + i, state);
+        auxController.setFunctionState(start_fn + i, state);
     }
 }
 
+/**
+ * @brief Callback for DCC function packets.
+ */
 void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
     if (Addr != dcc.getAddr()) return;
 
     switch (FuncGrp) {
         case FN_0_4:
-            functionManager.setFunctionState(0, (FuncState & FN_BIT_00) != 0);
+            auxController.setFunctionState(0, (FuncState & FN_BIT_00) != 0);
             processFunctionGroup(1, 4, FuncState);
             break;
         case FN_5_8:   processFunctionGroup(5, 4, FuncState); break;
@@ -154,6 +169,9 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
     }
 }
 
+/**
+ * @brief Callback for DCC CV write packets.
+ */
 void notifyCVChange(uint16_t CV, uint8_t Value) {
     // 1. Update our master CV store
     cvManager.writeCV(CV, Value);

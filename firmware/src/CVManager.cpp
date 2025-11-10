@@ -1,3 +1,7 @@
+/**
+ * @file CVManager.cpp
+ * @brief Implements the CVManager class for handling decoder Configuration Variables.
+ */
 #include "CVManager.h"
 #include "cv_definitions.h"
 #include "Arduino.h" // For EEPROM, etc.

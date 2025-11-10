@@ -32,8 +32,16 @@
 
 // --- CVManager Class ---
 
+/**
+ * @class CVManager
+ * @brief Manages the storage, retrieval, and persistence of decoder Configuration Variables (CVs).
+ *
+ * This class provides an abstraction layer for accessing CVs, handling indexed CV access
+ * and persistence to EEPROM.
+ */
 class CVManager {
 public:
+    /** @brief Construct a new CVManager object. */
     CVManager();
 
     /**
