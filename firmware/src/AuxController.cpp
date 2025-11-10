@@ -1,3 +1,7 @@
+/**
+ * @file AuxController.cpp
+ * @brief Implements the AuxController class and all related helper classes.
+ */
 #include "AuxController.h"
 #include "config.h"
 #include "cv_definitions.h"
@@ -517,7 +521,146 @@ void AuxController::parseRcn227PerOutputV3(CVManager& cvManager) {
     }
 }
 
-// Other parse functions (Rcn227PerFunction, V1, V2) are omitted for brevity, but would be included here.
-void AuxController::parseRcn227PerFunction(CVManager& cvManager) { /* ... implementation ... */ }
-void AuxController::parseRcn227PerOutputV1(CVManager& cvManager) { /* ... implementation ... */ }
-void AuxController::parseRcn227PerOutputV2(CVManager& cvManager) { /* ... implementation ... */ }
+void AuxController::parseRcn227PerFunction(CVManager& cvManager) {
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 40);
+
+    const int num_functions = 32;
+
+    for (int func_num = 0; func_num < num_functions; ++func_num) {
+        for (int dir = 0; dir < 2; ++dir) {
+            uint16_t base_cv = 257 + (func_num * 2 + dir) * 4;
+            uint32_t output_mask = (uint32_t)cvManager.readCV(base_cv + 2) << 16 | (uint32_t)cvManager.readCV(base_cv + 1) << 8 | cvManager.readCV(base_cv);
+            uint8_t blocking_func_num = cvManager.readCV(base_cv + 3);
+
+            if (output_mask == 0) continue;
+
+            ConditionVariable cv;
+            cv.id = (func_num * 2) + dir + 1;
+            cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
+            cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
+            addConditionVariable(cv);
+
+            uint8_t blocking_cv_id = 0;
+            if (blocking_func_num != 255) {
+                ConditionVariable blocking_cv;
+                blocking_cv.id = 100 + blocking_func_num;
+                blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func_num});
+                addConditionVariable(blocking_cv);
+                blocking_cv_id = blocking_cv.id;
+            }
+
+            for (int output_bit = 0; output_bit < 24; ++output_bit) {
+                if ((output_mask >> output_bit) & 1) {
+                    uint8_t physical_output_id = output_bit + 1;
+                    LogicalFunction* lf = new LogicalFunction(new EffectSteady(255));
+                    lf->addOutput(getOutputById(physical_output_id));
+                    addLogicalFunction(lf);
+                    uint8_t lf_idx = _logical_functions.size() - 1;
+
+                    MappingRule rule;
+                    rule.target_logical_function_id = lf_idx;
+                    rule.positive_conditions.push_back(cv.id);
+                    if (blocking_cv_id != 0) rule.negative_conditions.push_back(blocking_cv_id);
+                    rule.action = MappingAction::ACTIVATE;
+                    addMappingRule(rule);
+                }
+            }
+        }
+    }
+}
+
+void AuxController::parseRcn227PerOutputV1(CVManager& cvManager) {
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 41);
+
+    const int num_outputs = 24;
+
+    for (int output_num = 0; output_num < num_outputs; ++output_num) {
+        LogicalFunction* lf = nullptr; // Lazily created
+
+        for (int dir = 0; dir < 2; ++dir) {
+            uint16_t base_cv = 257 + (output_num * 2 + dir) * 4;
+            uint32_t func_mask = (uint32_t)cvManager.readCV(base_cv + 3) << 24 | (uint32_t)cvManager.readCV(base_cv + 2) << 16 | (uint32_t)cvManager.readCV(base_cv + 1) << 8 | cvManager.readCV(base_cv);
+
+            if (func_mask == 0) continue;
+
+            if (lf == nullptr) {
+                lf = new LogicalFunction(new EffectSteady(255));
+                lf->addOutput(getOutputById(output_num + 1));
+                addLogicalFunction(lf);
+            }
+            uint8_t lf_idx = _logical_functions.size() - 1;
+
+            for (int func_num = 0; func_num < 32; ++func_num) {
+                if ((func_mask >> func_num) & 1) {
+                    ConditionVariable cv;
+                    cv.id = 200 + (output_num * 64) + (dir * 32) + func_num; // Unique ID
+                    cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, (uint8_t)func_num});
+                    cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
+                    addConditionVariable(cv);
+
+                    MappingRule rule;
+                    rule.target_logical_function_id = lf_idx;
+                    rule.positive_conditions.push_back(cv.id);
+                    rule.action = MappingAction::ACTIVATE;
+                    addMappingRule(rule);
+                }
+            }
+        }
+    }
+}
+
+void AuxController::parseRcn227PerOutputV2(CVManager& cvManager) {
+    cvManager.writeCV(CV_INDEXED_CV_HIGH_BYTE, 0);
+    cvManager.writeCV(CV_INDEXED_CV_LOW_BYTE, 42);
+
+    const int num_outputs = 32;
+
+    for (int output_num = 0; output_num < num_outputs; ++output_num) {
+        LogicalFunction* lf = nullptr;
+
+        for (int dir = 0; dir < 2; ++dir) {
+            uint16_t base_cv = 257 + (output_num * 2 + dir) * 4;
+            uint8_t funcs[] = {
+                cvManager.readCV(base_cv),
+                cvManager.readCV(base_cv + 1),
+                cvManager.readCV(base_cv + 2)
+            };
+            uint8_t blocking_func = cvManager.readCV(base_cv + 3);
+
+            uint8_t blocking_cv_id = 0;
+            if (blocking_func != 255) {
+                ConditionVariable blocking_cv;
+                blocking_cv.id = 400 + blocking_func; // Unique ID
+                blocking_cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, blocking_func});
+                addConditionVariable(blocking_cv);
+                blocking_cv_id = blocking_cv.id;
+            }
+
+            for (int i = 0; i < 3; ++i) {
+                if (funcs[i] != 255) {
+                    if (lf == nullptr) {
+                        lf = new LogicalFunction(new EffectSteady(255));
+                        lf->addOutput(getOutputById(output_num + 1));
+                        addLogicalFunction(lf);
+                    }
+                    uint8_t lf_idx = _logical_functions.size() - 1;
+
+                    ConditionVariable cv;
+                    cv.id = 500 + (output_num * 8) + (dir * 4) + i; // Unique ID
+                    cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, funcs[i]});
+                    cv.conditions.push_back({TriggerSource::DIRECTION, TriggerComparator::EQ, (uint8_t)((dir == 0) ? DECODER_DIRECTION_FORWARD : DECODER_DIRECTION_REVERSE)});
+                    addConditionVariable(cv);
+
+                    MappingRule rule;
+                    rule.target_logical_function_id = lf_idx;
+                    rule.positive_conditions.push_back(cv.id);
+                    if (blocking_cv_id != 0) rule.negative_conditions.push_back(blocking_cv_id);
+                    rule.action = MappingAction::ACTIVATE;
+                    addMappingRule(rule);
+                }
+            }
+        }
+    }
+}

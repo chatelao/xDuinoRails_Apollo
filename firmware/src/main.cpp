@@ -38,12 +38,17 @@ void notifyCVChange(uint16_t CV, uint8_t Value);
 
 MaerklinMotorola MM(MM_SIGNAL_PIN);
 
+/**
+ * @brief Interrupt Service Routine for the Märklin-Motorola signal.
+ */
 void mm_isr() {
   MM.PinChange();
 }
 #endif
 
-
+/**
+ * @brief Setup function, called once at startup.
+ */
 void setup() {
   // --- Initialization ---
   motor.begin();
@@ -79,6 +84,9 @@ void setup() {
 #endif
 }
 
+/**
+ * @brief Main loop, called repeatedly.
+ */
 void loop() {
   static uint32_t last_millis = 0;
   uint32_t current_millis = millis();
@@ -113,6 +121,9 @@ void loop() {
 
 // --- DCC Callback Implementations ---
 #if defined(PROTOCOL_DCC)
+/**
+ * @brief Callback for DCC speed packets.
+ */
 void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
   if (Addr == dcc.getAddr()) {
     bool is_forward = (Dir == DCC_DIR_FWD);
@@ -126,6 +137,12 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
   }
 }
 
+/**
+ * @brief Helper function to process DCC function groups.
+ * @param start_fn The starting function number for this group.
+ * @param count The number of functions in this group.
+ * @param state_mask A bitmask of the function states.
+ */
 void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
     for (int i = 0; i < count; i++) {
         bool state = (state_mask >> i) & 0x01;
@@ -133,6 +150,9 @@ void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
     }
 }
 
+/**
+ * @brief Callback for DCC function packets.
+ */
 void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
     if (Addr != dcc.getAddr()) return;
 
@@ -149,6 +169,9 @@ void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint
     }
 }
 
+/**
+ * @brief Callback for DCC CV write packets.
+ */
 void notifyCVChange(uint16_t CV, uint8_t Value) {
     // 1. Update our master CV store
     cvManager.writeCV(CV, Value);

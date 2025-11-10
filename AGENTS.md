@@ -13,7 +13,7 @@
 # Code
 Follow the most used file & code naming conventions in the project:
 - If not yet provided use “snake case”
-- Add Doxygen comments
+- All C++ source code files (.h, .cpp) must be commented using Doxygen style. This includes file-level comments, class/struct comments, and comments for all public members (methods, variables).
 - Comment lines if magic numbers or complex operations are used
 -Vertically align all **equals signs** (`=`) and **other important operators** for readability.
 

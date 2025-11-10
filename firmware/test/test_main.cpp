@@ -1,3 +1,10 @@
+/**
+ * @file test_main.cpp
+ * @brief Main file for the native unit test suite.
+ *
+ * This file contains the test suite for the decoder firmware, run on a native
+ * environment using the Unity framework and ArduinoFake.
+ */
 #include <unity.h>
 #include <vector>
 #include <cstdint>
@@ -9,10 +16,10 @@
 
 using namespace fakeit;
 
-// Global state to mock effect activation for FunctionManager test.
+// Global state to mock effect activation for AuxController test.
 bool effect_is_active = false;
 
-// Custom mock for Effect used only in the FunctionManager test.
+// Custom mock for Effect used only in the AuxController test.
 class MockEffect : public Effect {
 public:
     void update(uint32_t delta_ms, const std::vector<PhysicalOutput*>& outputs) override {}
@@ -22,25 +29,22 @@ public:
 };
 
 // Include the source files directly to resolve linker errors in the test environment.
-#include "Effect.cpp"
-#include "PhysicalOutput.cpp"
-#include "LogicalFunction.cpp"
-#include "FunctionMapping.cpp"
-#include "FunctionManager.cpp"
+#include "AuxController.cpp"
 #include "CVManager.cpp"
-#include "PhysicalOutputManager.cpp"
-#include "CVLoader.cpp"
 
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-// Test Cases
+// Test Globals & Setup
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 const uint32_t DELTA_MS = 16;
 std::vector<PhysicalOutput*> mock_outputs;
-Mock<PhysicalOutput> mock_output1(1);
-Mock<PhysicalOutput> mock_output2(2);
+Mock<PhysicalOutput> mock_output1(1, OutputType::PWM);
+Mock<PhysicalOutput> mock_output2(2, OutputType::PWM);
 
-
+/**
+ * @brief Test setup function, called before each test case.
+ * Resets mocks and global state.
+ */
 void setUp(void) {
     ArduinoFakeReset();
     effect_is_active = false;
@@ -51,9 +55,19 @@ void setUp(void) {
     When(Method(mock_output2, setValue)).AlwaysReturn();
 }
 
+/**
+ * @brief Test teardown function, called after each test case.
+ */
 void tearDown(void) {}
 
-// Summary: Test the EffectSteady class.
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Test Cases
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+/**
+ * @brief Test the EffectSteady class.
+ * Ensures the effect sets the correct brightness when active and inactive.
+ */
 void test_effect_steady() {
     EffectSteady effect(128);
     effect.setActive(false);
@@ -65,7 +79,10 @@ void test_effect_steady() {
     Verify(Method(mock_output1, setValue).Using(128)).Once();
 }
 
-// Summary: Test the EffectDimming class.
+/**
+ * @brief Test the EffectDimming class.
+ * Ensures the effect switches between full and dimmed brightness levels correctly.
+ */
 void test_effect_dimming() {
     EffectDimming effect(255, 80);
     effect.setActive(true);
@@ -78,12 +95,15 @@ void test_effect_dimming() {
     Verify(Method(mock_output1, setValue).Using(80)).Once();
 }
 
-// Summary: Test activating and deactivating a LogicalFunction.
+/**
+ * @brief Test activating and deactivating a LogicalFunction.
+ * Ensures the logical function correctly controls its underlying physical output.
+ */
 void test_logical_function_activation() {
     When(Method(ArduinoFake(), pinMode)).AlwaysReturn();
     When(Method(ArduinoFake(), analogWrite)).AlwaysReturn();
 
-    PhysicalOutput output(1, PhysicalOutputType::PWM_LOW_SIDE);
+    PhysicalOutput output(1, OutputType::PWM);
     Effect* effect = new EffectSteady(200);
     LogicalFunction func(effect);
     func.addOutput(&output);
@@ -97,7 +117,10 @@ void test_logical_function_activation() {
     Verify(Method(ArduinoFake(), analogWrite).Using(1, 200)).Once();
 }
 
-// Summary: Test the strobe effect timing.
+/**
+ * @brief Test the strobe effect timing.
+ * Verifies the on/off timing of the strobe effect based on its duty cycle.
+ */
 void test_effect_strobe() {
     EffectStrobe effect(10, 25, 255); // 10Hz, 25% duty cycle -> 100ms period, 25ms on time
     effect.setActive(true);
@@ -112,7 +135,10 @@ void test_effect_strobe() {
     Verify(Method(mock_output1, setValue).Using(255)).Twice();
 }
 
-// Summary: Test the soft start/stop fade timing.
+/**
+ * @brief Test the soft start/stop fade timing.
+ * Verifies the brightness levels at different points during the fade-in and fade-out cycles.
+ */
 void test_effect_soft_start_stop() {
     EffectSoftStartStop effect(100, 50, 200); // 100ms fade in, 50ms fade out, target 200
 
@@ -129,54 +155,60 @@ void test_effect_soft_start_stop() {
     Verify(Method(mock_output1, setValue).Using(0)).Once();
 }
 
-// Summary: Test a simple mapping rule in the FunctionManager.
+/**
+ * @brief Test a simple mapping rule in the AuxController.
+ * Ensures a function key press correctly activates a logical function.
+ */
 void test_manager_mapping_rule() {
-    FunctionManager manager;
-    manager.addLogicalFunction(new LogicalFunction(new MockEffect()));
+    AuxController controller;
+    controller.addLogicalFunction(new LogicalFunction(new MockEffect()));
 
     ConditionVariable cv;
     cv.id = 1;
     cv.conditions.push_back({TriggerSource::FUNC_KEY, TriggerComparator::IS_TRUE, 1});
-    manager.addConditionVariable(cv);
+    controller.addConditionVariable(cv);
 
     MappingRule rule;
     rule.target_logical_function_id = 0;
     rule.positive_conditions.push_back(1);
     rule.action = MappingAction::ACTIVATE;
-    manager.addMappingRule(rule);
+    controller.addMappingRule(rule);
 
-    manager.update(DELTA_MS);
+    controller.update(DELTA_MS);
     TEST_ASSERT_FALSE(effect_is_active);
 
-    manager.setFunctionState(1, true);
-    manager.update(DELTA_MS);
+    controller.setFunctionState(1, true);
+    controller.update(DELTA_MS);
     TEST_ASSERT_TRUE(effect_is_active);
 }
 
-// Summary: Test that the CVLoader correctly configures the FunctionManager with default CVs.
+/**
+ * @brief Test that the AuxController correctly loads default RCN-225 headlight configuration from CVs.
+ */
 void test_cv_loader_default_headlight_config() {
     CVManager cvManager;
-    FunctionManager functionManager;
-    PhysicalOutputManager physicalOutputManager;
-    physicalOutputManager.begin();
+    AuxController auxController;
+    auxController.begin();
     cvManager.begin();
 
-    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+    auxController.loadFromCVs(cvManager);
 
-    TEST_ASSERT_EQUAL(2, functionManager.getLogicalFunctionCount());
-    TEST_ASSERT_EQUAL(3, functionManager.getConditionVariableCount());
-    TEST_ASSERT_EQUAL(2, functionManager.getMappingRuleCount());
+    TEST_ASSERT_EQUAL(2, auxController.getLogicalFunctionCount());
+    TEST_ASSERT_EQUAL(3, auxController.getConditionVariableCount());
+    TEST_ASSERT_EQUAL(2, auxController.getMappingRuleCount());
 
-    LogicalFunction* lf0 = functionManager.getLogicalFunction(0);
+    LogicalFunction* lf0 = auxController.getLogicalFunction(0);
     TEST_ASSERT_NOT_NULL(lf0);
 }
 
-// Summary: Test the RCN-227 "per function" mapping logic.
+
+/**
+ * @brief Test the RCN-227 "per function" mapping logic.
+ */
 void test_rcn227_per_function_mapping() {
     CVManager cvManager;
-    FunctionManager functionManager;
-    PhysicalOutputManager physicalOutputManager;
-    physicalOutputManager.begin();
+    AuxController auxController;
+    auxController.begin();
     cvManager.begin();
 
     // Select RCN-227 "per function" mapping
@@ -194,46 +226,47 @@ void test_rcn227_per_function_mapping() {
     cvManager.writeCV(f1_fwd_base_cv + 3, 5);  // Blocking function F5
 
     // Load the configuration
-    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+    auxController.loadFromCVs(cvManager);
 
     // --- Verification ---
     // We expect 2 logical functions (one for each output bit).
-    TEST_ASSERT_EQUAL(2, functionManager.getLogicalFunctionCount());
+    TEST_ASSERT_EQUAL(2, auxController.getLogicalFunctionCount());
     // We expect 2 condition variables: one for (F1 & FWD), one for (F5).
-    TEST_ASSERT_EQUAL(2, functionManager.getConditionVariableCount());
+    TEST_ASSERT_EQUAL(2, auxController.getConditionVariableCount());
     // We expect 2 mapping rules, one for each logical function.
-    TEST_ASSERT_EQUAL(2, functionManager.getMappingRuleCount());
+    TEST_ASSERT_EQUAL(2, auxController.getMappingRuleCount());
 
     // --- Test Activation Logic ---
     // Set initial state: Forward direction, F1 is OFF, F5 is OFF
-    functionManager.setDirection(DECODER_DIRECTION_FORWARD);
-    functionManager.setFunctionState(1, false);
-    functionManager.setFunctionState(5, false);
-    functionManager.update(DELTA_MS);
-    LogicalFunction* lf_out1 = functionManager.getLogicalFunction(0);
-    LogicalFunction* lf_out3 = functionManager.getLogicalFunction(1);
+    auxController.setDirection(DECODER_DIRECTION_FORWARD);
+    auxController.setFunctionState(1, false);
+    auxController.setFunctionState(5, false);
+    auxController.update(DELTA_MS);
+    LogicalFunction* lf_out1 = auxController.getLogicalFunction(0);
+    LogicalFunction* lf_out3 = auxController.getLogicalFunction(1);
     TEST_ASSERT_FALSE(lf_out1->isActive());
     TEST_ASSERT_FALSE(lf_out3->isActive());
 
     // Now, turn ON F1. Outputs should activate.
-    functionManager.setFunctionState(1, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(1, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_TRUE(lf_out1->isActive());
     TEST_ASSERT_TRUE(lf_out3->isActive());
 
     // Now, turn ON the blocking function F5. Outputs should deactivate.
-    functionManager.setFunctionState(5, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(5, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_FALSE(lf_out1->isActive());
     TEST_ASSERT_FALSE(lf_out3->isActive());
 }
 
-// Summary: Test the RCN-227 "per output" V1 (Matrix) mapping logic.
+/**
+ * @brief Test the RCN-227 "per output" V1 (Matrix) mapping logic.
+ */
 void test_rcn227_per_output_v1_mapping() {
     CVManager cvManager;
-    FunctionManager functionManager;
-    PhysicalOutputManager physicalOutputManager;
-    physicalOutputManager.begin();
+    AuxController auxController;
+    auxController.begin();
     cvManager.begin();
 
     // Select RCN-227 "per output" V1 mapping
@@ -250,44 +283,45 @@ void test_rcn227_per_output_v1_mapping() {
     cvManager.writeCV(out1_rev_base, 0b00000100); // F2
 
     // Load the configuration
-    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+    auxController.loadFromCVs(cvManager);
 
     // --- Verification ---
     // We expect 1 logical function for Output 1.
-    TEST_ASSERT_EQUAL(1, functionManager.getLogicalFunctionCount());
-    LogicalFunction* lf = functionManager.getLogicalFunction(0);
+    TEST_ASSERT_EQUAL(1, auxController.getLogicalFunctionCount());
+    LogicalFunction* lf = auxController.getLogicalFunction(0);
     TEST_ASSERT_NOT_NULL(lf);
 
     // --- Test Activation Logic ---
     // State: Fwd, F1 OFF, F2 OFF -> Inactive
-    functionManager.setDirection(DECODER_DIRECTION_FORWARD);
-    functionManager.setFunctionState(1, false);
-    functionManager.setFunctionState(2, false);
-    functionManager.update(DELTA_MS);
+    auxController.setDirection(DECODER_DIRECTION_FORWARD);
+    auxController.setFunctionState(1, false);
+    auxController.setFunctionState(2, false);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_FALSE(lf->isActive());
 
     // State: Fwd, F1 ON -> Active
-    functionManager.setFunctionState(1, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(1, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_TRUE(lf->isActive());
 
     // State: Rev, F1 ON -> Inactive
-    functionManager.setDirection(DECODER_DIRECTION_REVERSE);
-    functionManager.update(DELTA_MS);
+    auxController.setDirection(DECODER_DIRECTION_REVERSE);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_FALSE(lf->isActive());
 
     // State: Rev, F2 ON -> Active
-    functionManager.setFunctionState(2, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(2, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_TRUE(lf->isActive());
 }
 
-// Summary: Test the RCN-227 "per output" V2 (Function Number) mapping logic.
+/**
+ * @brief Test the RCN-227 "per output" V2 (Function Number) mapping logic.
+ */
 void test_rcn227_per_output_v2_mapping() {
     CVManager cvManager;
-    FunctionManager functionManager;
-    PhysicalOutputManager physicalOutputManager;
-    physicalOutputManager.begin();
+    AuxController auxController;
+    auxController.begin();
     cvManager.begin();
 
     // Select RCN-227 "per output" V2 mapping
@@ -305,38 +339,38 @@ void test_rcn227_per_output_v2_mapping() {
     cvManager.writeCV(out2_fwd_base + 3, 5);   // Blocking F5
 
     // Load the configuration
-    CVLoader::loadCvToFunctionManager(cvManager, functionManager, physicalOutputManager);
+    auxController.loadFromCVs(cvManager);
 
     // --- Verification ---
     // We expect 1 logical function for Output 2.
-    TEST_ASSERT_EQUAL(1, functionManager.getLogicalFunctionCount());
-    LogicalFunction* lf = functionManager.getLogicalFunction(0);
+    TEST_ASSERT_EQUAL(1, auxController.getLogicalFunctionCount());
+    LogicalFunction* lf = auxController.getLogicalFunction(0);
     TEST_ASSERT_NOT_NULL(lf);
 
     // --- Test Activation Logic ---
-    functionManager.setDirection(DECODER_DIRECTION_FORWARD);
-    functionManager.setFunctionState(3, false);
-    functionManager.setFunctionState(4, false);
-    functionManager.setFunctionState(5, false);
+    auxController.setDirection(DECODER_DIRECTION_FORWARD);
+    auxController.setFunctionState(3, false);
+    auxController.setFunctionState(4, false);
+    auxController.setFunctionState(5, false);
 
     // State: Fwd, F3 OFF, F4 OFF, F5 OFF -> Inactive
-    functionManager.update(DELTA_MS);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_FALSE(lf->isActive());
 
     // State: Fwd, F3 ON -> Active
-    functionManager.setFunctionState(3, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(3, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_TRUE(lf->isActive());
-    functionManager.setFunctionState(3, false); // reset
+    auxController.setFunctionState(3, false); // reset
 
     // State: Fwd, F4 ON -> Active
-    functionManager.setFunctionState(4, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(4, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_TRUE(lf->isActive());
 
     // State: Fwd, F4 ON, F5 ON (blocking) -> Inactive
-    functionManager.setFunctionState(5, true);
-    functionManager.update(DELTA_MS);
+    auxController.setFunctionState(5, true);
+    auxController.update(DELTA_MS);
     TEST_ASSERT_FALSE(lf->isActive());
 }
 
@@ -344,6 +378,9 @@ void test_rcn227_per_output_v2_mapping() {
 // Main Test Runner
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @brief Main setup for the test runner.
+ */
 void setup() {
     delay(2000);
     UNITY_BEGIN();
@@ -354,10 +391,14 @@ void setup() {
     RUN_TEST(test_effect_soft_start_stop);
     RUN_TEST(test_manager_mapping_rule);
     RUN_TEST(test_cv_loader_default_headlight_config);
+    RUN_TEST(test_logical_function_activation);
     RUN_TEST(test_rcn227_per_function_mapping);
     RUN_TEST(test_rcn227_per_output_v1_mapping);
     RUN_TEST(test_rcn227_per_output_v2_mapping);
     UNITY_END();
 }
 
+/**
+ * @brief Main loop for the test runner.
+ */
 void loop() {}
