@@ -11,12 +11,8 @@
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <xDuinoRails_DccSounds.h>
 
-// --- Sound Configuration ---
-#define DFPLAYER_TX_PIN 8
-#define DFPLAYER_RX_PIN 9
-
 // --- Global Objects ---
-SoundController soundController(DFPLAYER_RX_PIN, DFPLAYER_TX_PIN);
+SoundController soundController;
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 CVManager cvManager;
 xDuinoRails::AuxController auxController;
@@ -163,8 +159,8 @@ void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
         int current_fn = start_fn + i;
         auxController.setFunctionState(current_fn, state);
 
-        if (current_fn == 2 && state) {
-            soundController.play(1);
+        if (current_fn == 1 && state) {
+            soundController.play(1); // Play the beep sound
         }
     }
 }

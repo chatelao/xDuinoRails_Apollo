@@ -1,21 +1,27 @@
 #ifndef SOUNDCONTROLLER_H
 #define SOUNDCONTROLLER_H
 
-#include <Arduino.h>
-#include <SoftwareSerial.h>
-#include <DFMiniMp3.h>
+#include "SoundDriver.h"
+
+// --- Sound Driver Selection ---
+// The user must define one of these in their `config.h` or build flags.
+// #define SOUND_DRIVER_DFPLAYER
+// #define SOUND_DRIVER_I2S
+// #define SOUND_DRIVER_PWM
+// #define SOUND_DRIVER_PCM
 
 class SoundController {
 public:
-    SoundController(uint8_t rx_pin, uint8_t tx_pin);
-    void begin();
-    void loop();
+    SoundController();
+    ~SoundController();
+
+    bool begin();
     void play(uint16_t track);
     void setVolume(uint8_t volume);
+    void loop();
 
 private:
-    SoftwareSerial _dfplayer_serial;
-    DFMiniMp3<SoftwareSerial> _dfplayer;
+    SoundDriver* _driver;
 };
 
 #endif // SOUNDCONTROLLER_H
