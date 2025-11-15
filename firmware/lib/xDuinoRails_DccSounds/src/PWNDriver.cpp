@@ -2,6 +2,7 @@
 #include "generated/beep_sound.h"
 #include "hardware/pwm.h"
 #include "hardware/dma.h"
+#include "hardware/gpio.h"
 
 // --- Global State ---
 static int pwm_dma_channel;
