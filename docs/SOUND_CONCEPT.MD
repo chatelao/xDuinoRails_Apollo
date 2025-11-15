@@ -19,13 +19,16 @@ A flexible sound system requires separating the audio playback hardware from the
 The **Audio Output** is the physical hardware responsible for generating the analog audio signal. For high-fidelity sound, this concept is based on an I2S (Inter-IC Sound) interface.
 
 - **Type**: `I2S_DAC_AMPLIFIER`. This assumes the use of an external I2S DAC and a Class-D amplifier for driving the speaker, providing superior audio quality compared to simple PWM audio.
-- **Properties**: Sample rate (e.g., 22.05 kHz or 44.1 kHz), bit depth (e.g., 16-bit).
+- **Properties**:
+  - **Sample Rate**: 22.05 kHz or 44.1 kHz.
+  - **Bit Depth**: 16-bit.
+  - **Channels**: Stereo output, allowing for two independent speakers to create more immersive soundscapes.
 
 ### 2.2. Sound Slots & Polyphony
 
 A **Sound Slot** is a virtual audio channel capable of playing one sound file at a time. The total number of available slots defines the decoder's **polyphony** (how many sounds can be played simultaneously).
 
-- **Proposal**: A minimum of 8-12 simultaneous sound slots to allow for a complex and layered soundscape (e.g., engine, horn, bell, and brake squeal all at once).
+- **Proposal**: **16 simultaneous sound slots** to match the capabilities of high-end decoders and allow for a complex and richly layered soundscape.
 
 ### 2.3. Logical Sounds
 
@@ -46,6 +49,15 @@ Triggers can be:
 - **Speed Step**: The current speed step of the locomotive.
 - **Analog Input**: A sensor value, such as a load measurement from the motor control (for realistic engine load effects).
 
+### 2.5. Sound Collections / Profiles
+
+To provide maximum flexibility, the decoder will support the concept of **Sound Collections** (also known as "Sound Fonts" or "Profiles"). A Sound Collection is a complete package containing:
+
+- All necessary `.wav` files for a specific locomotive.
+- A configuration file (e.g., in XML or a custom text format) that defines all `Logical Sounds`, their parameters, and the complete `Function Mapping` table.
+
+This approach allows a user to completely change the sound of a locomotive by simply uploading a new Sound Collection, without needing to manually reconfigure individual CVs. A PC-based tool will be developed to facilitate the creation and management of these collections.
+
 ## 3. Sound Features & Effects
 
 This section details the proposed sound features, which would be implemented as "Sound Types" for Logical Sounds.
@@ -56,15 +68,14 @@ This is the most critical and complex part of the sound system. The goal is a dy
 
 - **Type**: `PRIME_MOVER`
 - **Diesel Engine**:
-  - **Implementation**: A "notching" system using multiple sound files for idle, and several levels of acceleration, steady speed, and deceleration. The system transitions smoothly between these sound files based on speed step and acceleration rate.
-  - **Files Needed**: `idle.wav`, `notch_up_1.wav`, `notch_1.wav`, `notch_down_1.wav`, `notch_up_2.wav`, etc.
+  - **Implementation**: A "notching" system using multiple sound files for idle and several levels of running speed. The system must be **load-dependent**, meaning it transitions between notches not just based on speed, but also on the current draw of the motor. A locomotive pulling a heavy train up a grade will "notch up" sooner and stay in higher notches longer than one running light on a level track.
+  - **Files Needed**: `idle.wav`, `notch_up_1.wav`, `notch_1_coast.wav`, `notch_1_load.wav`, `notch_down_1.wav`, etc.
 - **Steam Engine**:
-  - **Implementation**: A synchronized "chuff" sound.
-    - *Variant A (Simple Time-Based)*: Chuff rate is proportional to the speed step.
-    - *Variant B (Sensor-Based)*: An external sensor (e.g., Hall effect on a wheel) provides perfect synchronization.
-    - *Variant C (BEMF-Based)*: The motor's Back-EMF is analyzed to detect "cogging" and derive the wheel position, allowing for synchronization without an external sensor.
-  - **Proposal**: Implement Variant C as it provides high realism without requiring extra hardware installation.
-  - **Files Needed**: `chuff_1.wav`, `chuff_2.wav` (for variation), `steam_hiss.wav`, `rod_clank.wav`.
+  - **Implementation**: A synchronized "chuff" sound. The system will support multiple synchronization methods:
+    - *Sensor-Based (Primary)*: An external sensor (e.g., Hall effect, optical sensor on a wheel, or a physical cam) provides the most precise synchronization. This should be the recommended method for highest realism.
+    - *BEMF-Based (Advanced Alternative)*: The motor's Back-EMF is analyzed to detect "cogging" and derive the wheel position, allowing for synchronization without an external sensor. This provides high realism without requiring extra hardware installation.
+    - *Time-Based (Fallback)*: Chuff rate is proportional to the speed step. This is the simplest method and serves as a fallback.
+  - **Files Needed**: Multiple `chuff_coast_x.wav` and `chuff_load_x.wav` files for variation under different load conditions, `steam_hiss.wav`, `rod_clank.wav`.
 - **Electric Locomotive**:
   - **Implementation**: A primary motor whine that changes in pitch and volume with speed. Additional sounds for pantographs, converters, and blowers.
   - **Files Needed**: `motor_whine_loop.wav` (pitch-shifted in real-time), `pantograph_up.wav`, `pantograph_down.wav`, `blower_loop.wav`.
@@ -75,10 +86,13 @@ These are typically short, distinct sounds triggered by function keys or specifi
 
 - **Type**: `ONE_SHOT` (plays once) or `CONTINUOUS_LOOP` (plays while trigger is active).
 - **Examples**:
-  - **Horn/Whistle**: `ONE_SHOT`. Can have different files for short/long blasts.
+  - **Horn/Whistle**: `ONE_SHOT`. Can have different files for short/long blasts, and the mapping system should support "playable" horns where different function keys trigger different parts of a horn sequence.
   - **Bell**: `CONTINUOUS_LOOP`.
-  - **Coupler Clank**: `ONE_SHOT`. Can be automatically triggered by a "coupling" function.
-  - **Brake Squeal**: `ONE_SHOT` or `CONTINUOUS_LOOP`. Automatically triggered by deceleration.
+  - **Coupler Clank/Release**: `ONE_SHOT`. Can be automatically triggered by a "coupling" function, often linked to the physical movement of a digital coupler ("coupler waltz").
+  - **Braking Sounds**: The system will support multiple types of brake sounds, triggered by different conditions.
+    - *Brake Squeal*: A `CONTINUOUS_LOOP` that plays during deceleration, with pitch and volume potentially linked to the rate of deceleration.
+    - *Brake Application/Release*: `ONE_SHOT` sounds for the hiss of air brakes being applied or released, triggered at the start and end of a deceleration phase.
+    - *Dynamic Brakes*: A separate `CONTINUOUS_LOOP` for the whine of dynamic brakes on diesel or electric locomotives, active only when decelerating above a certain speed.
 - **Parameters**: `volume`, `hold_to_loop` (for horns), `fade_in_time`, `fade_out_time`.
 
 ### 3.3. Ambient & Automated Sounds
@@ -95,9 +109,16 @@ These sounds create a living soundscape and are often not directly controlled by
 ### 4.1. Sound Storage
 
 High-quality sound requires significant storage.
-- **Proposal**: Use a microSD card or an onboard SPI flash chip (e.g., 16-32 MB) to store sound files. This provides ample space for uncompressed 16-bit WAV files.
+- **Proposal**: Use an onboard SPI flash chip of **128 Mbit (16 MB) or greater**. This is the current standard for high-end decoders and provides ample space for uncompressed 16-bit WAV files for a full sound profile.
 
-### 4.2. File System
+### 4.2. High-Speed Sound Loading
+
+To facilitate the rapid updating of sound collections, a dedicated high-speed interface is required. Relying on the DCC track signal is too slow for 16 MB of data.
+- **Proposal**: Implement a sound-loading protocol over a dedicated hardware interface. Options include:
+  - **SUSI Interface**: Use the SUSI clock/data pins with a proprietary high-speed protocol, as is common with commercial decoders.
+  - **USB-to-Serial**: Integrate a USB-to-serial converter (like a CH340) on the decoder board for a direct connection to a PC. This is a more user-friendly option.
+
+### 4.3. File System
 
 A simple file system is required to access the sound files on the storage medium.
 - **Proposal**: Use a lightweight library like `FatFS` for microSD cards or `LittleFS` for SPI flash.
@@ -118,7 +139,7 @@ public:
 };
 
 class AudioEngine {
-    SoundSlot slots[12];
+    SoundSlot slots[16];
     void mixAudioToI2S(); // Called by DMA interrupt
 };
 ```
