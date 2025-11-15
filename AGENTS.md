@@ -31,3 +31,5 @@ Add a comment to each testcase
 # Workflow
 - When working on a task from `docs/LIGHT_AND_AUX_CONCEPT.MD`, always read the concept document first to understand the context.
 - After completing a phase from the roadmap, update `docs/IMPLEMENTATION_STATUS.MD` to reflect the progress.
+- When working on a sound-related task, always read `docs/SOUND_CONCEPT.MD` first.
+- After completing a task from `docs/SOUND_ROADMAP.MD`, update the roadmap to mark the task as complete.
