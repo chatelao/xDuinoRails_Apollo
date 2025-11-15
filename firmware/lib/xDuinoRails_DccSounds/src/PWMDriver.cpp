@@ -1,4 +1,4 @@
-#include "PWNDriver.h"
+#include "PWMDriver.h"
 #include "generated/beep_sound.h"
 #include "hardware/pwm.h"
 #include "hardware/dma.h"
@@ -8,10 +8,10 @@
 static int pwm_dma_channel;
 static uint8_t pwm_audio_buffer[sizeof(beep_sound) / 2];
 
-PWNDriver::PWNDriver(uint8_t pwm_pin) : _pwm_pin(pwm_pin) {
+PWMDriver::PWMDriver(uint8_t pwm_pin) : _pwm_pin(pwm_pin) {
 }
 
-bool PWNDriver::begin() {
+bool PWMDriver::begin() {
     // --- GPIO ---
     gpio_set_function(_pwm_pin, GPIO_FUNC_PWM);
     int slice_num = pwm_gpio_to_slice_num(_pwm_pin);
@@ -42,10 +42,10 @@ bool PWNDriver::begin() {
     return true;
 }
 
-void PWNDriver::loop() {
+void PWMDriver::loop() {
 }
 
-void PWNDriver::play(uint16_t track) {
+void PWMDriver::play(uint16_t track) {
     if (track == 1) {
         if (dma_channel_is_busy(pwm_dma_channel)) {
             return;
@@ -61,6 +61,6 @@ void PWNDriver::play(uint16_t track) {
     }
 }
 
-void PWNDriver::setVolume(uint8_t volume) {
+void PWMDriver::setVolume(uint8_t volume) {
     // To be implemented.
 }

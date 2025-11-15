@@ -2,10 +2,11 @@
 #define PWMDRIVER_H
 
 #include "SoundDriver.h"
+#include <cstdint>
 
-class PWNDriver : public SoundDriver {
+class PWMDriver : public SoundDriver {
 public:
-    PWNDriver(uint8_t pwm_pin);
+    PWMDriver(uint8_t pwm_pin);
 
     bool begin() override;
     void play(uint16_t track) override;

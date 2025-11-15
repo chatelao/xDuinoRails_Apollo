@@ -8,7 +8,7 @@
 #elif defined(SOUND_DRIVER_I2S)
 #include "I2SDriver.h"
 #elif defined(SOUND_DRIVER_PWM)
-#include "PWNDriver.h"
+#include "PWMDriver.h"
 #elif defined(SOUND_DRIVER_PCM)
 #include "PCMDriver.h"
 #endif
@@ -19,7 +19,7 @@ SoundController::SoundController() {
 #elif defined(SOUND_DRIVER_I2S)
     _driver = new I2SDriver();
 #elif defined(SOUND_DRIVER_PWM)
-    _driver = new PWNDriver(PWM_SOUND_PIN);
+    _driver = new PWMDriver(PWM_SOUND_PIN);
 #elif defined(SOUND_DRIVER_PCM)
     _driver = new PCMDriver(PCM_SOUND_PIN);
 #else
@@ -53,7 +53,6 @@ void SoundController::play(uint16_t track) {
             _audioEngine.play(&_sounds[track - 1]);
         }
     } else {
-        // For non-polyphonic drivers, pass the track number directly
         _driver->play(track);
     }
 }
