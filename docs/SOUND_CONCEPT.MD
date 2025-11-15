@@ -49,14 +49,6 @@ Triggers can be:
 - **Speed Step**: The current speed step of the locomotive.
 - **Analog Input**: A sensor value, such as a load measurement from the motor control (for realistic engine load effects).
 
-### 2.5. Sound Collections / Profiles
-
-To provide maximum flexibility, the decoder will support the concept of **Sound Collections** (also known as "Sound Fonts" or "Profiles"). A Sound Collection is a complete package containing:
-
-- All necessary `.wav` files for a specific locomotive.
-- A configuration file (e.g., in XML or a custom text format) that defines all `Logical Sounds`, their parameters, and the complete `Function Mapping` table.
-
-This approach allows a user to completely change the sound of a locomotive by simply uploading a new Sound Collection, without needing to manually reconfigure individual CVs. A PC-based tool will be developed to facilitate the creation and management of these collections.
 
 ## 3. Sound Features & Effects
 
@@ -89,19 +81,35 @@ These are typically short, distinct sounds triggered by function keys or specifi
   - **Horn/Whistle**: `ONE_SHOT`. Can have different files for short/long blasts, and the mapping system should support "playable" horns where different function keys trigger different parts of a horn sequence.
   - **Bell**: `CONTINUOUS_LOOP`.
   - **Coupler Clank/Release**: `ONE_SHOT`. Can be automatically triggered by a "coupling" function, often linked to the physical movement of a digital coupler ("coupler waltz").
-  - **Braking Sounds**: The system will support multiple types of brake sounds, triggered by different conditions.
-    - *Brake Squeal*: A `CONTINUOUS_LOOP` that plays during deceleration, with pitch and volume potentially linked to the rate of deceleration.
-    - *Brake Application/Release*: `ONE_SHOT` sounds for the hiss of air brakes being applied or released, triggered at the start and end of a deceleration phase.
-    - *Dynamic Brakes*: A separate `CONTINUOUS_LOOP` for the whine of dynamic brakes on diesel or electric locomotives, active only when decelerating above a certain speed.
+
+### 3.3. Prototypical Braking Control
+
+To simulate prototypical operation, the decoder will implement a user-controllable, dual-mode braking system. This feature is designed to be used with high-momentum CV settings, where the operator drives the train using the throttle and applies the brakes to slow down, rather than simply reducing the throttle. The user can switch between two distinct braking modes using a function key.
+
+- **Independent (Locomotive) Brake**:
+  - **Function**: Applies the brakes on the locomotive(s) only. This mode uses a higher deceleration rate, suitable for light engine moves or for managing slack in a train.
+  - **Control**: Activated by a dedicated function key (e.g., F11) when the "Brake Select" function (e.g., F12) is OFF.
+  - **Sounds**: A loud `brake_squeal.wav` is played while the brake is active, and an air hiss "bail-off" sound (`bail_off.wav`) is played upon release.
+
+- **Train (Automatic) Brake**:
+  - **Function**: Simulates applying the brakes to the entire train. This mode uses a more gradual, configurable deceleration rate.
+  - **Control**: Activated by the same dedicated function key (e.g., F11) when the "Brake Select" function (e.g., F12) is ON. Activating the Brake Select function will also trigger a `train_line_charge.wav` sound to simulate preparing the train's air brake system.
+  - **Sounds**: Plays a `brake_apply.wav` hiss at the start, followed by a `brake_squeal.wav` (which can be a different, less aggressive sample than the independent brake). A `brake_release.wav` hiss is played upon release.
+
+- **Dynamic Brakes**:
+  - **Function**: This is a separate braking system, typically used on diesel and electric locomotives for maintaining speed on downgrades.
+  - **Control**: Triggered by a dedicated function key.
+  - **Sounds**: A `dynamic_brake_whine.wav` loop is played. The prime mover sound will change to a specific notch (e.g., idle or a mid-range notch, depending on the prototype) while the dynamic brake is active.
+
 - **Parameters**: `volume`, `hold_to_loop` (for horns), `fade_in_time`, `fade_out_time`.
 
-### 3.3. Ambient & Automated Sounds
+### 3.4. Ambient & Automated Sounds
 
 These sounds create a living soundscape and are often not directly controlled by the user.
 
 - **Type**: `RANDOM_AMBIENT`
 - **Implementation**: The sound is played at random intervals when the locomotive is in a specific state (e.g., stopped or moving slowly).
-- **Examples**: Air compressor pump, generator whine, cab radio chatter, track noise.
+- **Examples**: Air compressor pump, generator whine, cab radio chatter, track noise, injector sounds, "Fireman Ed" / crew chatter (e.g., "shoveling coal"), power reverser sounds.
 - **Parameters**: `min_delay`, `max_delay`, `trigger_state` (e.g., `stopped`, `moving`).
 
 ## 4. Audio Engine & Hardware
@@ -144,32 +152,62 @@ class AudioEngine {
 };
 ```
 
-## 5. Function Mapping System
 
-The flexible mapping system from the Light & AUX concept will be adapted for sound. This allows the user to define precisely how sounds are triggered.
+## 5. VSD Integration: Concept of Operations
 
-### 5.1. Multi-level Table Logic
+To provide maximum flexibility and leverage a well-established standard, the decoder will natively support the **JMRI Virtual Sound Decoder (VSD)** file format. This section details the concept of operations for handling and parsing these files.
 
-The proposed **Multi-level Table Logic (Variant C)** is perfect for sound. It allows complex combinations of triggers to control sound events.
+### 5.1. VSD File Handling
 
-1.  **Condition Variables**: Define booleans based on decoder state.
-    - `C1 = F_STATE(2, ON)` (Horn button)
-    - `C2 = SPEED_IS(ZERO)` (Stopped)
-    - `C3 = IS_DECELERATING()`
-2.  **Logic Table**: Use boolean logic to trigger sounds.
-    - `IF (C1 AND C2) THEN Play "Horn_Stopped.wav"`
-    - `IF (C1 AND NOT C2) THEN Play "Horn_Moving.wav"`
-    - `IF (C3) THEN Play "Brake_Squeal.wav"`
+A VSD file is a `.vsd` zip archive containing `.wav` files and a `config.xml` manifest. The decoder firmware will handle this archive in memory.
 
-This provides incredible power, allowing for context-sensitive sound playback.
+1.  **Loading**: Upon startup or when commanded, the decoder will load the entire `.vsd` file from its flash storage into a RAM buffer.
+2.  **Decompression**: The firmware will use the lightweight **`miniz`** library to access the contents of the zip archive directly from the RAM buffer.
+3.  **XML Extraction**: The `miniz` library will be used to locate and decompress the `config.xml` file into a separate text buffer. The `.wav` files will be left compressed in the archive for now.
+4.  **XML Parsing**: The **`expat`** XML parser library will be used to parse the `config.xml` from its text buffer. `expat` is a stream-oriented (SAX) parser, which is highly efficient in memory usage as it does not need to build a complete Document Object Model (DOM) tree.
+
+### 5.2. Core `config.xml` Concepts
+
+The VSD `config.xml` defines all sound logic. The `expat`-based parser will read this file and translate its contents into the decoder's internal sound event and action lists.
+
+- **`<sound>` Tags**: Each `<sound>` tag will be parsed to create an internal "Logical Sound" object. The parser will extract the sound `type` (e.g., `steam1`, `horn`), the associated `.wav` file name, and parameters like gain (`<gain>`).
+- **`<sound-event>` Tags**: The parser will iterate through the `<trigger>` tags within each `<sound-event>` block.
+- **`<trigger>` and `<action>` Tags**: For each `<trigger>`, the parser will create a mapping rule that links the trigger condition (e.g., "F2 ON") to the specified `<action>` (e.g., "PLAY") on the target `<sound>`.
+
+This parsing process effectively translates the declarative XML structure into an executable logic map that the decoder's sound engine can run.
+
+### 5.3. Supported Features (Phase 1)
+
+The initial implementation will focus on supporting a core subset of the VSD specification to provide a functional and useful sound experience.
+
+- **Supported Engine Types**:
+  - `steam1` (generic steam engine with chuff control)
+  - `diesel3` (generic diesel with notching)
+- **Supported Sound Types**:
+  - `horn`, `bell`, `coupler`
+- **Supported Triggers**:
+  - `THROTTLE` (for function keys)
+  - `SPEED` (for speed-based events)
+  - `BRAKE_KEY`
+  - `COAST`
+- **Supported Actions**:
+  - `PLAY`, `LOOP`, `STOP`, `FADE_OUT`
+
+### 5.4. Integration with Decoder CVs
+
+While the VSD file defines the core logic, users will still need to configure certain parameters. The decoder will expose CVs to override or adjust settings from the VSD file.
+
+- **CV Override**: A CV will be provided to adjust the `<gain>` (volume) of each `<sound>` tag, identified by its order in the `config.xml` file (e.g., Sound 1 Volume, Sound 2 Volume, etc.).
+- **Brake & Accel Rates**: CVs will be provided to set the `<brake-time>`, `<accel-rate>`, and `<decel-rate>` values referenced by the VSD logic.
+- **JMRI Integration**: The JMRI DecoderPro definition file will be updated to give user-friendly names to these CVs, making it clear which CV adjusts the volume for the "Horn", "Bell", etc., based on the loaded VSD profile.
 
 ## 6. Protocol-Specific Considerations
 
 ### 6.1. DCC
 
 DCC is the ideal protocol for a feature-rich sound decoder.
-- **Functions**: F0-F28 provide ample triggers for a wide variety of sounds (horn, bell, compressor, etc.).
-- **Configuration**: All sound options, volumes, and the entire function mapping table will be configurable via CVs. A PC-based tool is highly recommended for managing the "sound profile" (the collection of WAV files and CV settings).
+- **Functions**: F0-F28 provide ample triggers for the events defined in the VSD's `config.xml`.
+- **Configuration**: While the VSD file defines the sound logic, key parameters such as individual sound volumes (`<gain>`), acceleration rates, and braking times can be exposed and configurable via CVs.
 
 ### 6.2. Märklin-Motorola (MM)
 
@@ -239,11 +277,11 @@ The goal is to allow users to perform all common configuration tasks—such as a
   - [ ] 4. Implement `RANDOM_AMBIENT` sounds.
 - **Outcome**: A full-featured sound decoder with highly configurable and realistic sound.
 
-### Phase 4: Tooling & "Sound Font" Management
+### Phase 4: VSD Parser Implementation
 
-- **Goal**: Create a user-friendly way to manage sound profiles.
+- **Goal**: Read and execute a VSD file from the decoder's storage.
 - **Tasks**:
-  - [ ] 1. Develop a PC-based tool for creating "sound fonts" (a package containing WAV files and a CV configuration file).
-  - [ ] 2. The tool should allow users to easily upload a complete sound profile to the decoder's storage.
-  - [ ] 3. Write comprehensive user documentation.
-- **Outcome**: A mature, powerful, and user-friendly sound decoder platform.
+  - [ ] 1. Select and integrate a lightweight embedded XML parsing library.
+  - [ ] 2. Implement the VSD parser logic to read `config.xml` and configure the sound engine.
+  - [ ] 3. Add a mechanism to upload `.vsd` files to the decoder's flash storage via the high-speed interface.
+- **Outcome**: The decoder can be fully configured by loading a standard JMRI VSD file.
