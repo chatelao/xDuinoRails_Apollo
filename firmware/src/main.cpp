@@ -20,7 +20,7 @@ CVManagerAdapter cvManagerAdapter(cvManager);
 
 // --- Sound Objects ---
 SoftwareSerial dfplayer_serial(DFPLAYER_RX_PIN, DFPLAYER_TX_PIN); // RX, TX
-DFMiniMp3<SoftwareSerial, DfMp3PlayerOut> dfplayer(dfplayer_serial);
+DFMiniMp3<SoftwareSerial> dfplayer(dfplayer_serial);
 
 
 #if defined(PROTOCOL_DCC)
@@ -131,6 +131,7 @@ void loop() {
 
   motor.update();
   auxController.update(delta_ms);
+  dfplayer.loop();
 }
 
 // --- DCC Callback Implementations ---
