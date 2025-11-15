@@ -1,23 +1,58 @@
 #include "SoundController.h"
+#include "config.h" // For pin definitions
 
-SoundController::SoundController(uint8_t rx_pin, uint8_t tx_pin) :
-    _dfplayer_serial(rx_pin, tx_pin),
-    _dfplayer(_dfplayer_serial) {
+// --- Include the correct driver header ---
+#if defined(SOUND_DRIVER_DFPLAYER)
+#include "DFPlayerDriver.h"
+#elif defined(SOUND_DRIVER_I2S)
+#include "I2SDriver.h"
+#elif defined(SOUND_DRIVER_PWM)
+#include "PWNDriver.h"
+#elif defined(SOUND_DRIVER_PCM)
+#include "PCMDriver.h"
+#endif
+
+SoundController::SoundController() {
+#if defined(SOUND_DRIVER_DFPLAYER)
+    _driver = new DFPlayerDriver(DFPLAYER_RX_PIN, DFPLAYER_TX_PIN);
+#elif defined(SOUND_DRIVER_I2S)
+    _driver = new I2SDriver();
+#elif defined(SOUND_DRIVER_PWM)
+    _driver = new PWNDriver(PWM_SOUND_PIN);
+#elif defined(SOUND_DRIVER_PCM)
+    _driver = new PCMDriver(PCM_SOUND_PIN);
+#else
+    _driver = nullptr;
+#endif
 }
 
-void SoundController::begin() {
-    _dfplayer_serial.begin(9600);
-    _dfplayer.begin();
+SoundController::~SoundController() {
+    if (_driver) {
+        delete _driver;
+    }
 }
 
-void SoundController::loop() {
-    _dfplayer.loop();
+bool SoundController::begin() {
+    if (_driver) {
+        return _driver->begin();
+    }
+    return false;
 }
 
 void SoundController::play(uint16_t track) {
-    _dfplayer.playMp3FolderTrack(track);
+    if (_driver) {
+        _driver->play(track);
+    }
 }
 
 void SoundController::setVolume(uint8_t volume) {
-    _dfplayer.setVolume(volume);
+    if (_driver) {
+        _driver->setVolume(volume);
+    }
+}
+
+void SoundController::loop() {
+    if (_driver) {
+        _driver->loop();
+    }
 }

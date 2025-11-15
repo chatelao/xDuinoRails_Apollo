@@ -133,4 +133,22 @@
 #define MOTOR_STARTUP_KICK_DURATION 10
 
 
+// =====================================================================================
+// Sound Configuration
+// =====================================================================================
+
+// --- I2S Driver Pins ---
+#define I2S_BCLK_PIN 2
+#define I2S_LRCLK_PIN 3
+#define I2S_DIN_PIN 4
+
+// --- DFPlayer Mini Driver Pins ---
+#define DFPLAYER_TX_PIN 8
+#define DFPLAYER_RX_PIN 9
+
+// --- PWM / PCM Driver Pins ---
+#define PWM_SOUND_PIN 6
+#define PCM_SOUND_PIN 6
+
+
 #endif // CONFIG_H
