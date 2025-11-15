@@ -15,13 +15,13 @@ This document outlines a comprehensive concept for a state-of-the-art, polyphoni
 
 A flexible sound system requires separating the audio playback hardware from the logical sound events. This allows complex soundscapes to be created and customized without altering the firmware.
 
-- [ ] **2.1. Audio Output:**
-    - [ ] Implement support for I2S DACs.
-    - [ ] Support sample rates of 22.05 kHz or 44.1 kHz.
-    - [ ] Support 16-bit audio.
+- [x] **2.1. Audio Output:**
+    - [x] Implement support for I2S DACs.
+    - [x] Support sample rates of 22.05 kHz or 44.1 kHz.
+    - [x] Support 16-bit audio.
     - [ ] Support stereo output.
-- [ ] **2.2. Sound Slots & Polyphony:**
-    - [ ] Implement 16 simultaneous sound slots.
+- [x] **2.2. Sound Slots & Polyphony:**
+    - [x] Implement 16 simultaneous sound slots.
 - [ ] **2.3. Logical Sounds:**
     - [ ] Create a `LogicalSound` class.
     - [ ] Implement sound types: `PRIME_MOVER`, `CONTINUOUS_LOOP`, `ONE_SHOT`, `RANDOM_AMBIENT`.
@@ -31,7 +31,7 @@ A flexible sound system requires separating the audio playback hardware from the
     - [ ] Implement triggers for speed step changes.
     - [ ] Implement triggers for analog input (motor load).
 
-- **Implementation Progress:** Not yet started.
+- **Implementation Progress:** The core polyphonic audio engine has been implemented. It features a 16-channel software mixer with volume control. The system uses a hardware abstraction layer, allowing the engine to work with drivers that support raw PCM playback (e.g., I2S), while gracefully degrading for simpler drivers (e.g., DFPlayer Mini).
 
 ## 3. Sound Features & Effects
 

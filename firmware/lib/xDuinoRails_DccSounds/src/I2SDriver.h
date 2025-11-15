@@ -27,13 +27,8 @@ public:
     void play(uint16_t track) override;
     void setVolume(uint8_t volume) override;
     void loop() override;
-
-    /**
-     * @brief Plays a sound from a raw PCM data buffer.
-     * @param pcm_data Pointer to the raw PCM data (16-bit signed).
-     * @param data_len Length of the data in bytes.
-     */
-    void playRaw(const int16_t* pcm_data, size_t data_len);
+    void playRaw(const int16_t* pcm_data, size_t data_len) override;
+    bool supportsPolyphony() const override { return true; }
 
 private:
     void setupPIO();

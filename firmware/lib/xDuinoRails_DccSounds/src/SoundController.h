@@ -1,14 +1,11 @@
 #ifndef SOUNDCONTROLLER_H
 #define SOUNDCONTROLLER_H
 
+#include "AudioEngine.h"
+#include "WavDecoder.h"
 #include "SoundDriver.h"
 
-// --- Sound Driver Selection ---
-// The user must define one of these in their `config.h` or build flags.
-// #define SOUND_DRIVER_DFPLAYER
-// #define SOUND_DRIVER_I2S
-// #define SOUND_DRIVER_PWM
-// #define SOUND_DRIVER_PCM
+#define MAX_SOUNDS 2
 
 class SoundController {
 public:
@@ -21,6 +18,8 @@ public:
     void loop();
 
 private:
+    AudioEngine _audioEngine;
+    WavDecoder _sounds[MAX_SOUNDS];
     SoundDriver* _driver;
 };
 
