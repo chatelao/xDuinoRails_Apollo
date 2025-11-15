@@ -181,42 +181,69 @@ The limited function keys (F0-F4) in MM present a challenge.
   - The system can be configured so that a short press of F1 is a short horn blast, while a long press is a continuous blast.
   - Automated sounds (brakes, compressors) are triggered by locomotive state, not function keys, so they will work fully under MM.
 
-## 7. Proposed Implementation Roadmap
+## 7. Configuration & Tooling
+
+A powerful sound system is only useful if it can be easily configured by the end-user. The configuration will be handled through a combination of CVs and external tools.
+
+### 7.1. CV Layout
+
+The configuration variables (CVs) will be organized in a logical manner, following established RCN standards where applicable. Key configuration areas will include:
+
+- **Master Volumes**: Individual CVs to control the master volume of the prime mover, horn, bell, and other effects categories.
+- **Individual Sound Volumes**: Indexed CVs will be used to set the volume for each individual `Logical Sound` defined in the sound profile.
+- **Prime Mover Settings**: CVs for configuring the chuff rate for steam engines, diesel notch points, and load sensitivity.
+- **Function Mapping**: The flexible multi-level logic table will be configurable via a large block of indexed CVs, as outlined in the RCN-227 standard.
+
+While direct CV programming will be possible, it is not the recommended method for initial setup due to the complexity of the mapping system.
+
+### 7.2. JMRI DecoderPro Integration
+
+To provide a user-friendly configuration experience, creating a comprehensive decoder definition file for JMRI DecoderPro is a primary goal.
+
+- **Implementation**: An XML file will be created that defines all supported CVs, their valid ranges, and their meanings.
+- **Features**:
+  - **Intuitive Panes**: The definition will use DecoderPro's pane-based layout to group related settings (e.g., "Sound Volumes," "Function Mapping," "Motor Control").
+  - **User-Friendly Labels**: All CVs and options will have clear, descriptive English labels.
+  - **Dynamic Sound Profile Support**: The DecoderPro definition will be designed to work in conjunction with the loaded `Sound Collection`. It will allow users to fine-tune the volumes and basic parameters of the sounds defined in the collection, but the core sound-to-file mapping will be managed by the collection itself.
+
+The goal is to allow users to perform all common configuration tasks—such as adjusting volumes, remapping functions, and setting motor parameters—through the familiar DecoderPro interface, without needing to manually edit individual CVs.
+
+## 8. Proposed Implementation Roadmap
 
 ### Phase 1: Core Audio Infrastructure
 
 - **Goal**: Get a single sound playing from storage.
 - **Tasks**:
-  1. Finalize hardware choice (microcontroller, flash/SD, I2S DAC/Amp).
-  2. Implement I2S and DMA drivers.
-  3. Implement the file system and a WAV file reader.
-  4. Create a single Sound Slot that can play a `ONE_SHOT` sound triggered by a function key.
+  - [ ] 1. Finalize hardware choice (microcontroller, flash/SD, I2S DAC/Amp).
+  - [ ] 2. Implement I2S and DMA drivers.
+  - [ ] 3. Implement the file system and a WAV file reader.
+  - [ ] 4. Create a single Sound Slot that can play a `ONE_SHOT` sound triggered by a function key.
 - **Outcome**: A "beep-on-F1" proof of concept.
 
 ### Phase 2: Polyphony & Prime Mover
 
 - **Goal**: Implement multi-sound playback and dynamic engine sounds.
 - **Tasks**:
-  1. Implement the software mixer and multiple Sound Slots for polyphony.
-  2. Implement the `PRIME_MOVER` sound type for a diesel, with basic notching logic tied to speed step.
-  3. Implement basic automated sounds like brake squeal.
+  - [ ] 1. Implement the software mixer and multiple Sound Slots for polyphony.
+  - [ ] 2. Implement the `PRIME_MOVER` sound type for a diesel, with basic notching logic tied to speed step.
+  - [ ] 3. Implement basic automated sounds like brake squeal.
 - **Outcome**: A decoder with basic, but working, diesel engine sounds and effects.
 
 ### Phase 3: Advanced Mapping & Steam/Electric
 
 - **Goal**: Implement the full, flexible sound control system and other engine types.
 - **Tasks**:
-  1. Implement the full multi-level table logic for sound mapping.
-  2. Implement the steam `PRIME_MOVER` with BEMF-based chuff synchronization.
-  3. Implement the electric `PRIME_MOVER` with pitch-shifting.
-  4. Implement `RANDOM_AMBIENT` sounds.
+  - [ ] 1. Implement the full multi-level table logic for sound mapping.
+  - [ ] 2. Implement the steam `PRIME_MOVER` with BEMF-based chuff synchronization.
+  - [ ] 3. Implement the electric `PRIME_MOVER` with pitch-shifting.
+  - [ ] 4. Implement `RANDOM_AMBIENT` sounds.
 - **Outcome**: A full-featured sound decoder with highly configurable and realistic sound.
 
 ### Phase 4: Tooling & "Sound Font" Management
 
 - **Goal**: Create a user-friendly way to manage sound profiles.
 - **Tasks**:
-  1. Develop a PC-based tool for creating "sound fonts" (a package containing WAV files and a CV configuration file).
-  2. The tool should allow users to easily upload a complete sound profile to the decoder's storage.
-  3. Write comprehensive user documentation.
+  - [ ] 1. Develop a PC-based tool for creating "sound fonts" (a package containing WAV files and a CV configuration file).
+  - [ ] 2. The tool should allow users to easily upload a complete sound profile to the decoder's storage.
+  - [ ] 3. Write comprehensive user documentation.
 - **Outcome**: A mature, powerful, and user-friendly sound decoder platform.
