@@ -9,12 +9,18 @@
 #include "CVManager.h"
 #include "CVManagerAdapter.h"
 #include <xDuinoRails_DccLightsAndFunctions.h>
+#include <SoftwareSerial.h>
+#include <DFMiniMp3.h>
 
 // --- Global Objects ---
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 CVManager cvManager;
 xDuinoRails::AuxController auxController;
 CVManagerAdapter cvManagerAdapter(cvManager);
+
+// --- Sound Objects ---
+SoftwareSerial dfplayer_serial(DFPLAYER_RX_PIN, DFPLAYER_TX_PIN); // RX, TX
+DFMiniMp3<SoftwareSerial> dfplayer(dfplayer_serial);
 
 
 #if defined(PROTOCOL_DCC)
@@ -55,6 +61,8 @@ void setup() {
   // --- Initialization ---
   motor.begin();
   cvManager.begin();
+  dfplayer.begin();
+  dfplayer.setVolume(25);
 
   auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM);
   auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::PWM);
@@ -123,6 +131,7 @@ void loop() {
 
   motor.update();
   auxController.update(delta_ms);
+  dfplayer.loop();
 }
 
 // --- DCC Callback Implementations ---
@@ -152,7 +161,12 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
 void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
     for (int i = 0; i < count; i++) {
         bool state = (state_mask >> i) & 0x01;
-        auxController.setFunctionState(start_fn + i, state);
+        int current_fn = start_fn + i;
+        auxController.setFunctionState(current_fn, state);
+
+        if (current_fn == 2 && state) {
+            dfplayer.play(1);
+        }
     }
 }
 
