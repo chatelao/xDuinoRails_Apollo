@@ -9,19 +9,18 @@
 #include "CVManager.h"
 #include "CVManagerAdapter.h"
 #include <xDuinoRails_DccLightsAndFunctions.h>
-#include <SoftwareSerial.h>
-#include <DFMiniMp3.h>
+#include <xDuinoRails_DccSounds.h>
+
+// --- Sound Configuration ---
+#define DFPLAYER_TX_PIN 8
+#define DFPLAYER_RX_PIN 9
 
 // --- Global Objects ---
+SoundController soundController(DFPLAYER_RX_PIN, DFPLAYER_TX_PIN);
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 CVManager cvManager;
 xDuinoRails::AuxController auxController;
 CVManagerAdapter cvManagerAdapter(cvManager);
-
-// --- Sound Objects ---
-SoftwareSerial dfplayer_serial(DFPLAYER_RX_PIN, DFPLAYER_TX_PIN); // RX, TX
-DFMiniMp3<SoftwareSerial> dfplayer(dfplayer_serial);
-
 
 #if defined(PROTOCOL_DCC)
 // --- DCC-Specific Includes and Objects ---
@@ -61,8 +60,8 @@ void setup() {
   // --- Initialization ---
   motor.begin();
   cvManager.begin();
-  dfplayer.begin();
-  dfplayer.setVolume(25);
+  soundController.begin();
+  soundController.setVolume(25);
 
   auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM);
   auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::PWM);
@@ -131,7 +130,7 @@ void loop() {
 
   motor.update();
   auxController.update(delta_ms);
-  dfplayer.loop();
+  soundController.loop();
 }
 
 // --- DCC Callback Implementations ---
@@ -165,7 +164,7 @@ void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
         auxController.setFunctionState(current_fn, state);
 
         if (current_fn == 2 && state) {
-            dfplayer.play(1);
+            soundController.play(1);
         }
     }
 }
