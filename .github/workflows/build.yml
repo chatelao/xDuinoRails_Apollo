@@ -2,10 +2,15 @@ name: Build Firmware
 
 on:
   push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
   pull_request:
 
 jobs:
-  build:
+  ci-build:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,3 +53,72 @@ jobs:
       with:
         name: firmware-${{ matrix.protocol }}
         path: firmware/.pio/build/xiao_${{ matrix.protocol }}/firmware.uf2
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: See the assets below for the compiled firmware files.
+          draft: false
+          prerelease: false
+
+  build-and-upload-release:
+    name: Build and Upload Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: release
+    strategy:
+      matrix:
+        protocol: [dcc, mm]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+
+    - name: Cache PlatformIO dependencies
+      uses: actions/cache@v4
+      with:
+        path: firmware/.pio
+        key: ${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+
+    - name: Build Firmware (${{ matrix.protocol }})
+      run: pio run -d firmware -e xiao_${{ matrix.protocol }}
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: firmware/.pio/build/xiao_${{ matrix.protocol }}/firmware.uf2
+        asset_name: firmware-${{ matrix.protocol }}.uf2
+        asset_content_type: application/octet-stream
