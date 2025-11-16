@@ -56,3 +56,17 @@ void SoundController::loop() {
         _driver->loop();
     }
 }
+
+size_t SoundController::availableForWrite() {
+    if (_driver) {
+        return _driver->availableForWrite();
+    }
+    return 0;
+}
+
+size_t SoundController::write(const uint8_t* data, size_t size) {
+    if (_driver) {
+        return _driver->write(data, size);
+    }
+    return 0;
+}

@@ -61,16 +61,18 @@ This document describes the necessary steps to develop a fully functional multi-
 
 ## Phase 5: Sound System Implementation
 
-- [ ] **1. Core Audio Infrastructure**
-    - [ ] Implement the basic hardware drivers (I2S, DMA) and a WAV reader.
-- [ ] **2. Polyphony & Prime Mover**
-    - [ ] Implement a software mixer for the simultaneous playback of multiple sounds.
-    - [ ] Implement a dynamic `PRIME_MOVER` sound.
-- [ ] **3. Advanced Mapping & Special Locomotives**
-    - [ ] Implement the complete table logic for flexible sound mapping.
-    - [ ] Implement the `PRIME_MOVER` logic for steam and electric locomotives.
-- [ ] **4. Tools & "Sound Font" Management**
-    - [ ] Develop a PC-based tool for creating and managing "sound fonts."
+- [ ] **1. VSD File Handling & Basic Playback**
+    - [ ] Integrate libraries for filesystem (`LittleFS`), ZIP decompression (`miniz`), and XML parsing (`expat`).
+    - [ ] Implement a VSD file handler to load and extract sound and configuration data.
+    - [ ] Implement a basic `ONE_SHOT` sound trigger based on a VSD `config.xml`.
+- [ ] **2. Polyphony and Advanced Sound Types**
+    - [ ] Implement a software mixer for polyphonic playback of up to 16 channels.
+    - [ ] Implement `CONTINUOUS_LOOP` and `RANDOM_AMBIENT` sound types.
+    - [ ] Implement a dynamic, load-dependent `PRIME_MOVER` sound for diesel locomotives.
+- [ ] **3. Advanced VSD Integration & Special Locomotives**
+    - [ ] Implement the full VSD specification, including all trigger and action types.
+    - [ ] Implement `PRIME_MOVER` logic for steam and electric locomotives.
+    - [ ] Implement CV overrides for VSD parameters and create a JMRI DecoderPro definition file.
 
 ## Phase 6: Hardware Development
 

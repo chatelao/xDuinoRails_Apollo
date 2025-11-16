@@ -35,9 +35,20 @@ public:
      */
     void playRaw(const int16_t* pcm_data, size_t data_len);
 
+    size_t availableForWrite() override;
+    size_t write(const uint8_t* data, size_t size) override;
+
 private:
     void setupPIO();
     void setupDMA();
+
+    static void dma_handler();
+
+    uint32_t _dma_buffer[256];
+    volatile uint16_t _dma_write_ptr;
+    volatile uint16_t _dma_read_ptr;
+    int _dma_channel_a;
+    int _dma_channel_b;
 };
 
 #endif // I2SDRIVER_H
