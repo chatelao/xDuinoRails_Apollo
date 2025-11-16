@@ -3,6 +3,8 @@ name: Build Firmware
 on:
   push:
   pull_request:
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -48,3 +50,40 @@ jobs:
       with:
         name: firmware-${{ matrix.protocol }}
         path: firmware/.pio/build/xiao_${{ matrix.protocol }}/firmware.uf2
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release'
+    permissions:
+      contents: write
+    steps:
+    - name: Download DCC Firmware
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware-dcc
+        path: firmware-dcc
+
+    - name: Download MM Firmware
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware-mm
+        path: firmware-mm
+
+    - name: Upload DCC Firmware to Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: firmware-dcc/firmware.uf2
+        asset_name: xiao_dcc.uf2
+        tag: ${{ github.ref }}
+        overwrite: true
+
+    - name: Upload MM Firmware to Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: firmware-mm/firmware.uf2
+        asset_name: xiao_mm.uf2
+        tag: ${{ github.ref }}
+        overwrite: true
