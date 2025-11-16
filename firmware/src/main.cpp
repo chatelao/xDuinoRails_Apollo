@@ -10,9 +10,15 @@
 #include "CVManagerAdapter.h"
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <xDuinoRails_DccSounds.h>
+#include "sound/VSDReader.h"
+#include "sound/WAVPlayer.h"
+#include "sound/VSDConfigParser.h"
 
 // --- Global Objects ---
 SoundController soundController;
+VSDReader vsdReader;
+WAVPlayer wavPlayer(soundController);
+VSDConfigParser vsdConfigParser;
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 CVManager cvManager;
 xDuinoRails::AuxController auxController;
@@ -57,6 +63,7 @@ void setup() {
   motor.begin();
   cvManager.begin();
   soundController.begin();
+  LittleFS.begin();
   soundController.setVolume(25);
 
   auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM);
@@ -66,6 +73,15 @@ void setup() {
 
   // --- Load Configuration ---
   auxController.loadFromCVs(cvManagerAdapter);
+
+  if (vsdReader.begin("/test.vsd")) {
+      uint8_t* xml_data = nullptr;
+      size_t xml_size = 0;
+      if (vsdReader.get_file_data("config.xml", &xml_data, &xml_size)) {
+          vsdConfigParser.parse((char*)xml_data, xml_size);
+          free(xml_data);
+      }
+  }
 
   // --- Protocol-Specific Setup ---
 #if defined(PROTOCOL_DCC)
@@ -127,6 +143,7 @@ void loop() {
   motor.update();
   auxController.update(delta_ms);
   soundController.loop();
+  wavPlayer.update();
 }
 
 // --- DCC Callback Implementations ---
@@ -161,6 +178,20 @@ void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
 
         if (current_fn == 1 && state) {
             soundController.play(1); // Play the beep sound
+        }
+
+        if (state) {
+            for (int i = 0; i < vsdConfigParser.get_trigger_count(); i++) {
+                const SoundTrigger* trigger = &vsdConfigParser.get_triggers()[i];
+                if (trigger->function_number == current_fn) {
+                    uint8_t* wav_data = nullptr;
+                    size_t wav_size = 0;
+                    if (vsdReader.get_file_data(trigger->sound_name.c_str(), &wav_data, &wav_size)) {
+                        wavPlayer.begin(wav_data, wav_size);
+                        wavPlayer.play();
+                    }
+                }
+            }
         }
     }
 }

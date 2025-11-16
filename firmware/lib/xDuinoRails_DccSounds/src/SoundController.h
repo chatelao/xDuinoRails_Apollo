@@ -19,6 +19,8 @@ public:
     void play(uint16_t track);
     void setVolume(uint8_t volume);
     void loop();
+    size_t availableForWrite();
+    size_t write(const uint8_t* data, size_t size);
 
 private:
     SoundDriver* _driver;

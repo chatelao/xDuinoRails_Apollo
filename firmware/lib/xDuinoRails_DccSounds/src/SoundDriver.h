@@ -40,6 +40,20 @@ public:
      *        to handle any ongoing sound processing.
      */
     virtual void loop() = 0;
+
+    /**
+     * @brief Returns the number of bytes available for writing.
+     * @return The number of bytes available.
+     */
+    virtual size_t availableForWrite() = 0;
+
+    /**
+     * @brief Writes audio data to the driver.
+     * @param data A pointer to the audio data.
+     * @param size The size of the audio data.
+     * @return The number of bytes written.
+     */
+    virtual size_t write(const uint8_t* data, size_t size) = 0;
 };
 
 #endif // SOUNDDRIVER_H
