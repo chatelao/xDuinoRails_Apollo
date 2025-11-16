@@ -11,14 +11,15 @@
 #include <xDuinoRails_DccLightsAndFunctions.h>
 #include <xDuinoRails_DccSounds.h>
 #include "sound/VSDReader.h"
-#include "sound/WAVPlayer.h"
+#include "sound/WAVStream.h"
 #include "sound/VSDConfigParser.h"
+#include "sound/SoftwareMixer.h"
 
 // --- Global Objects ---
 SoundController soundController;
 VSDReader vsdReader;
-WAVPlayer wavPlayer(soundController);
 VSDConfigParser vsdConfigParser;
+SoftwareMixer mixer(soundController);
 XDuinoRails_MotorDriver motor(MOTOR_PIN_A, MOTOR_PIN_B, MOTOR_BEMF_A_PIN, MOTOR_BEMF_B_PIN);
 CVManager cvManager;
 xDuinoRails::AuxController auxController;
@@ -63,6 +64,7 @@ void setup() {
   motor.begin();
   cvManager.begin();
   soundController.begin();
+  mixer.begin();
   LittleFS.begin();
   soundController.setVolume(25);
 
@@ -143,7 +145,7 @@ void loop() {
   motor.update();
   auxController.update(delta_ms);
   soundController.loop();
-  wavPlayer.update();
+  mixer.update();
 }
 
 // --- DCC Callback Implementations ---
@@ -181,14 +183,20 @@ void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
         }
 
         if (state) {
-            for (int i = 0; i < vsdConfigParser.get_trigger_count(); i++) {
-                const SoundTrigger* trigger = &vsdConfigParser.get_triggers()[i];
+            for (int j = 0; j < vsdConfigParser.get_trigger_count(); j++) {
+                const SoundTrigger* trigger = &vsdConfigParser.get_triggers()[j];
                 if (trigger->function_number == current_fn) {
                     uint8_t* wav_data = nullptr;
                     size_t wav_size = 0;
                     if (vsdReader.get_file_data(trigger->sound_name.c_str(), &wav_data, &wav_size)) {
-                        wavPlayer.begin(wav_data, wav_size);
-                        wavPlayer.play();
+                        WAVStream* stream = new WAVStream();
+                        if (stream->begin(wav_data, wav_size)) {
+                            mixer.play(stream);
+                        } else {
+                            // The stream failed to init, so we must clean up both the stream and the data.
+                            delete stream;
+                            free(wav_data);
+                        }
                     }
                 }
             }

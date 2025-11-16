@@ -4,43 +4,43 @@ This document provides a detailed, task-level roadmap for the implementation of 
 
 ## 1. VSD File Handling & Basic Playback
 
-- [ ] **1.1. Library Integration:**
-    - [ ] Add the `LittleFS` library to `platformio.ini` for filesystem management.
-    - [ ] Add the `miniz` library for in-memory ZIP decompression.
-    - [ ] Add the `expat` library for XML parsing.
-    - [ ] Verify that the firmware compiles successfully with the new libraries.
+- [x] **1.1. Library Integration:**
+    - [x] Add the `LittleFS` library to `platformio.ini` for filesystem management.
+    - [x] Add the `miniz` library for in-memory ZIP decompression.
+    - [x] Add the `expat` library for XML parsing.
+    - [x] Verify that the firmware compiles successfully with the new libraries.
 
-- [ ] **1.2. Filesystem & VSD Loader:**
-    - [ ] Implement a `FileSystem` wrapper class to abstract filesystem operations.
-    - [ ] Implement a `VSDReader` class responsible for loading a `.vsd` file.
-    - [ ] Implement a method in `VSDReader` to decompress the archive using `miniz`.
-    - [ ] Implement a method to extract raw file data (e.g., `config.xml`, `.wav` files) by name from the in-memory archive.
+- [x] **1.2. Filesystem & VSD Loader:**
+    - [x] Implement a `FileSystem` wrapper class to abstract filesystem operations.
+    - [x] Implement a `VSDReader` class responsible for loading a `.vsd` file.
+    - [x] Implement a method in `VSDReader` to decompress the archive using `miniz`.
+    - [x] Implement a method to extract raw file data (e.g., `config.xml`, `.wav` files) by name from the in-memory archive.
 
-- [ ] **1.3. Basic Audio Playback:**
-    - [ ] Create a `WAVPlayer` class.
-    - [ ] Implement a method in `WAVPlayer` to parse a `.wav` header.
-    - [ ] Implement a method to stream audio samples from the `WAVPlayer` to the existing I2S hardware driver.
-    - [ ] Create a proof-of-concept example that plays a bundled `.wav` file on startup.
+- [x] **1.3. Basic Audio Playback:**
+    - [x] Create a `WAVPlayer` class.
+    - [x] Implement a method in `WAVPlayer` to parse a `.wav` header.
+    - [x] Implement a method to stream audio samples from the `WAVPlayer` to the existing I2S hardware driver.
+    - [x] Create a proof-of-concept example that plays a bundled `.wav` file on startup.
 
-- [ ] **1.4. Basic VSD `config.xml` Parsing:**
-    - [ ] Create a `VSDConfigParser` class that uses the `expat` library.
-    - [ ] Implement parsing for a `<sound>` tag of type `ONE_SHOT`.
-    - [ ] Implement parsing for a `<trigger>` tag linked to a DCC function key.
-    - [ ] Store the parsed sound and trigger information in simple data structures.
+- [x] **1.4. Basic VSD `config.xml` Parsing:**
+    - [x] Create a `VSDConfigParser` class that uses the `expat` library.
+    - [x] Implement parsing for a `<sound>` tag of type `ONE_SHOT`.
+    - [x] Implement parsing for a `<trigger>` tag linked to a DCC function key.
+    - [x] Store the parsed sound and trigger information in simple data structures.
 
-- [ ] **1.5. System Integration:**
-    - [ ] Instantiate the `VSDReader` and `VSDConfigParser` in the main firmware.
-    - [ ] Load and parse a sample `sound.vsd` file from the filesystem on startup.
-    - [ ] In the main loop, check for the parsed DCC function key trigger.
-    - [ ] When triggered, use the `WAVPlayer` to play the corresponding `ONE_SHOT` sound extracted from the VSD archive.
+- [x] **1.5. System Integration:**
+    - [x] Instantiate the `VSDReader` and `VSDConfigParser` in the main firmware.
+    - [x] Load and parse a sample `sound.vsd` file from the filesystem on startup.
+    - [x] In the main loop, check for the parsed DCC function key trigger.
+    - [x] When triggered, use the `WAVPlayer` to play the corresponding `ONE_SHOT` sound extracted from the VSD archive.
 
 ## 2. Polyphony and Advanced Sound Types
 
-- [ ] **2.1. Software Mixer:**
-    - [ ] Create a `SoftwareMixer` class.
-    - [ ] Implement logic to manage 16 audio channels.
-    - [ ] Implement a mixing algorithm to combine all active channels into a single stereo output stream.
-    - [ ] Refactor the `WAVPlayer` to become a "sound source" that feeds its audio data into a mixer channel instead of directly to the I2S driver.
+- [x] **2.1. Software Mixer:**
+    - [x] Create a `SoftwareMixer` class.
+    - [x] Implement logic to manage 16 audio channels.
+    - [x] Implement a mixing algorithm to combine all active channels into a single stereo output stream.
+    - [x] Refactor the `WAVPlayer` to become a "sound source" that feeds its audio data into a mixer channel instead of directly to the I2S driver.
 
 - [ ] **2.2. Advanced Sound Types:**
     - [ ] Implement the `CONTINUOUS_LOOP` sound type.
