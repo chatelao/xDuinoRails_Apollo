@@ -1,7 +1,7 @@
 #ifndef CV_MANAGER_ADAPTER_H
 #define CV_MANAGER_ADAPTER_H
 
-#include "AuxController.h"
+#include <xDuinoRails_DccLightsAndFunctions.h>
 #include "CVManager.h"
 
 class CVManagerAdapter : public xDuinoRails::ICVAccess {

@@ -68,9 +68,9 @@ void setup() {
   LittleFS.begin();
   soundController.setVolume(25);
 
-  auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::PWM);
-  auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::PWM);
-  auxController.addPhysicalOutput(PO_CABIN_LIGHT, xDuinoRails::OutputType::PWM);
+  auxController.addPhysicalOutput(PO_HEADLIGHT_FWD, xDuinoRails::OutputType::LIGHT_SOURCE);
+  auxController.addPhysicalOutput(PO_HEADLIGHT_REV, xDuinoRails::OutputType::LIGHT_SOURCE);
+  auxController.addPhysicalOutput(PO_CABIN_LIGHT, xDuinoRails::OutputType::LIGHT_SOURCE);
   auxController.addPhysicalOutput(PO_SERVO_1, xDuinoRails::OutputType::SERVO);
 
   // --- Load Configuration ---
