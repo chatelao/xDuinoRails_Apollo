@@ -1,0 +1,130 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "85b5ae64-50e7-4f19-8f4a-77cb43529c96")
+	(paper "A4")
+	(lib_symbols
+		(symbol "Seeed_Xiao_RP2040"
+			(pin_numbers (offset 1.016))
+			(pin_names (offset 1.016))
+			(exclude_from_sim no)
+			(in_bom yes) (on_board yes)
+			(property "Reference" "U" (at -7.62 11.43 0) (effects (font (size 1.27 1.27))))
+			(property "Value" "Seeed_Xiao_RP2040" (at 0 0 0) (effects (font (size 1.27 1.27)) (justify left)))
+			(property "Footprint" "Module:Seeed_XIAO_RP2040" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+			(symbol "Seeed_Xiao_RP2040_0_1"
+				(rectangle (start -7.62 8.89) (end 7.62 -11.43) (stroke (width 0.254) (type solid)) (fill (type background)))
+			)
+			(symbol "Seeed_Xiao_RP2040_1_1"
+				(pin bidirectional line (at -10.16 7.62 0) (length 2.54) (name "P0_A0_D0" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at -10.16 5.08 0) (length 2.54) (name "P1_A1_D1" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at -10.16 2.54 0) (length 2.54) (name "P2_A2_D2" (effects (font (size 1.27 1.27)))) (number "3" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at -10.16 0 0) (length 2.54) (name "P3_A3_D3" (effects (font (size 1.27 1.27)))) (number "4" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at -10.16 -2.54 0) (length 2.54) (name "P4_SDA_D4" (effects (font (size 1.27 1.27)))) (number "5" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at -10.16 -5.08 0) (length 2.54) (name "P5_SCL_D5" (effects (font (size 1.27 1.27)))) (number "6" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at -10.16 -7.62 0) (length 2.54) (name "P6_TX_D6" (effects (font (size 1.27 1.27)))) (number "7" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at 10.16 -7.62 180) (length 2.54) (name "P7_RX_D7" (effects (font (size 1.27 1.27)))) (number "8" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at 10.16 -5.08 180) (length 2.54) (name "P8_SCK_D8" (effects (font (size 1.27 1.27)))) (number "9" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at 10.16 -2.54 180) (length 2.54) (name "P9_MISO_D9" (effects (font (size 1.27 1.27)))) (number "10" (effects (font (size 1.27 1.27)))))
+				(pin bidirectional line (at 10.16 0 180) (length 2.54) (name "P10_MOSI_D10" (effects (font (size 1.27 1.27)))) (number "11" (effects (font (size 1.27 1.27)))))
+				(pin power_in line (at 10.16 2.54 180) (length 2.54) (name "3V3" (effects (font (size 1.27 1.27)))) (number "12" (effects (font (size 1.27 1.27)))))
+				(pin power_in line (at 10.16 5.08 180) (length 2.54) (name "GND" (effects (font (size 1.27 1.27)))) (number "13" (effects (font (size 1.27 1.27)))))
+				(pin power_in line (at 10.16 7.62 180) (length 2.54) (name "5V" (effects (font (size 1.27 1.27)))) (number "14" (effects (font (size 1.27 1.27)))))
+			)
+		)
+		(symbol "Resistor"
+			(pin_numbers (hide yes))
+			(pin_names (offset 1.016) (hide yes))
+			(exclude_from_sim no)
+			(in_bom yes) (on_board yes)
+			(property "Reference" "R" (at 0 2.54 0) (effects (font (size 1.27 1.27))))
+			(property "Value" "R" (at 0 0 0) (effects (font (size 1.27 1.27))))
+			(symbol "Resistor_0_1"
+				(rectangle (start -2.54 1.27) (end 2.54 -1.27) (stroke (width 0.254) (type solid)) (fill (type none)))
+			)
+			(symbol "Resistor_1_1"
+				(pin passive line (at -5.08 0 0) (length 2.54) (name "~" (effects (font (size 1.27 1.27)) hide)) (number "1" (effects (font (size 1.27 1.27)) hide)))
+				(pin passive line (at 5.08 0 180) (length 2.54) (name "~" (effects (font (size 1.27 1.27)) hide)) (number "2" (effects (font (size 1.27 1.27)) hide)))
+			)
+		)
+		(symbol "LED"
+			(pin_numbers (hide yes))
+			(pin_names (offset 1.016) (hide yes))
+			(exclude_from_sim no)
+			(in_bom yes) (on_board yes)
+			(property "Reference" "D" (at 0 2.54 0) (effects (font (size 1.27 1.27))))
+			(property "Value" "LED" (at 0 0 0) (effects (font (size 1.27 1.27))))
+			(symbol "LED_0_1"
+				(polyline (pts (xy -1.27 1.27) (xy -1.27 -1.27)) (stroke (width 0.254)))
+				(polyline (pts (xy 1.27 0) (xy -1.27 1.27)) (stroke (width 0.254)))
+				(polyline (pts (xy 1.27 0) (xy -1.27 -1.27)) (stroke (width 0.254)))
+				(polyline (pts (xy 1.27 1.27) (xy 1.27 -1.27)) (stroke (width 0.254)))
+			)
+			(symbol "LED_1_1"
+				(pin passive line (at -3.81 0 0) (length 2.54) (name "A" (effects (font (size 1.27 1.27)) hide)) (number "1" (effects (font (size 1.27 1.27)) hide)))
+				(pin passive line (at 3.81 0 180) (length 2.54) (name "K" (effects (font (size 1.27 1.27)) hide)) (number "2" (effects (font (size 1.27 1.27)) hide)))
+			)
+		)
+		(symbol "GND"
+			(pin_numbers (hide yes))
+			(pin_names (offset 1.016) (hide yes))
+			(exclude_from_sim no)
+			(power yes) (in_bom yes) (on_board yes)
+			(property "Reference" "#PWR" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+			(property "Value" "GND" (at 0 -1.524 0) (effects (font (size 1.27 1.27))))
+			(symbol "GND_0_1"
+				(polyline (pts (xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)) (stroke (width 0.254)))
+			)
+			(symbol "GND_1_1"
+				(pin power_in line (at 0 0 270) (length 0) (name "GND" (effects (font (size 1.27 1.27)) hide)) (number "1" (effects (font (size 1.27 1.27)) hide)))
+			)
+		)
+	)
+	(junction_colors (color 0 0 0 0))
+	(no_connect_colors (color 0 0 0 0))
+	(bus_entry_colors (color 0 0 0 0))
+	(graphical_items
+		(text "RP2040 Decoder Pin Usage:
+Left Side (Top to Bottom):
+Pin 1 (P0): Headlight Fwd
+Pin 2 (P1): Headlight Rev
+..." (at 150 50 0) (effects (font (size 1.27 1.27)) (justify left)) (uuid "6b8d4eb9-6cd0-4ac8-a747-612dfd6e49e0"))
+		(label "HL_FWD" (at 69.84 87.62 180) (fields_autoplaced) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0191b746-b1cf-4c31-9d1d-8831430bc085"))
+		(label "HL_REV" (at 69.84 85.08 180) (fields_autoplaced) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f14d9eaa-b8fb-42ae-923f-9c4140c791fd"))
+		(label "HL_FWD" (at 34.92 130.0 0) (fields_autoplaced) (effects (font (size 1.27 1.27)) (justify left)) (uuid "170b5376-39c9-4966-9b10-704ababa288e"))
+		(label "HL_REV" (at 34.92 145.0 0) (fields_autoplaced) (effects (font (size 1.27 1.27)) (justify left)) (uuid "d19de2c2-a000-4b08-ad71-2d10f435c5f7"))
+	)
+	(symbol_instances
+		(path "/ba752929-8f42-41d6-96f8-fb8c04c965b4"
+			(reference "U1") (unit 1) (value "Seeed_Xiao_RP2040") (footprint "Module:Seeed_XIAO_RP2040") (lib_id "Seeed_Xiao_RP2040") (at 80.0 80.0 0)
+		)
+		(path "/eef9c23b-d420-4ccc-aa41-61fe7f3dab47"
+			(reference "R1") (unit 1) (value "1k") (footprint "") (lib_id "Resistor") (at 40.0 130.0 0)
+		)
+		(path "/4a57fe9a-99e5-4b8c-b40b-54645a78c4e7"
+			(reference "D1") (unit 1) (value "LED_FWD") (footprint "") (lib_id "LED") (at 55.0 130.0 0)
+		)
+		(path "/a36c2a62-63f2-453a-aa50-4881fbf6b720"
+			(reference "#PWR01") (unit 1) (value "GND") (footprint "") (lib_id "GND") (at 70.0 130.0 0)
+		)
+		(path "/54cd7e1f-3f8c-4542-a4b4-3f068187d589"
+			(reference "R2") (unit 1) (value "1k") (footprint "") (lib_id "Resistor") (at 40.0 145.0 0)
+		)
+		(path "/eaec4ef8-7d1c-4058-ac0d-9148b8e31a42"
+			(reference "D2") (unit 1) (value "LED_REV") (footprint "") (lib_id "LED") (at 55.0 145.0 0)
+		)
+		(path "/39775c9a-9654-497d-92dc-9ee867af7cce"
+			(reference "#PWR02") (unit 1) (value "GND") (footprint "") (lib_id "GND") (at 70.0 145.0 0)
+		)
+		(path "/ba8cc37b-888f-4970-a854-bf82a9399235"
+			(reference "#PWR03") (unit 1) (value "GND") (footprint "") (lib_id "GND") (at 95.24 85.08 0)
+		)
+	)
+
+	(wire (pts (xy 45.08 130.0) (xy 51.19 130.0)) (stroke (width 0)) (uuid "a1f3ffe3-7df1-45fc-85ef-c60c694c6bab"))
+	(wire (pts (xy 58.81 130.0) (xy 70.0 130.0)) (stroke (width 0)) (uuid "ad66e621-3391-463f-abaa-b0e4596058af"))
+	(wire (pts (xy 45.08 145.0) (xy 51.19 145.0)) (stroke (width 0)) (uuid "e9c851f1-b540-45e3-9523-48c284cc4155"))
+	(wire (pts (xy 58.81 145.0) (xy 70.0 145.0)) (stroke (width 0)) (uuid "37a6a7b5-8097-4c99-83a0-ca905376ea35"))
+	(wire (pts (xy 90.16 85.08) (xy 95.24 85.08)) (stroke (width 0)) (uuid "5b6992a0-6229-4240-affd-a37bc525bddc"))
+)
