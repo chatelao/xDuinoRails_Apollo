@@ -1,0 +1,86 @@
+@startuml
+!option handwritten true
+
+title System Architektur (Decoder Internal)
+
+' --- TOP LEVEL: Configuration ---
+package "Configuration" {
+    component "Web Interface" as Web
+    component "CV Manager" as CV
+    
+    ' Vertikale Anordnung: Web oben, CV unten
+    Web -down-> CV
+}
+
+component "MSC" as MSC
+CV <--> MSC 
+
+' --- MAIN CONTAINER: DECODER ---
+package "Decoder" {
+    
+    ' 1. Internal Physical Interface (Moved Visually to Top)
+    rectangle "Rails / Track Interface" as Rails #E0E0E0
+
+    ' 2. Protocols
+    package "Protocols" as ProtoPkg {
+        component "SX" as SX
+        component "MM" as MM
+        component "DCC" as DCC
+    }
+
+    ' 3. Der zentrale Event Hub
+    rectangle "xdrTrainAPI\n<<Event API>>" as API #AliceBlue
+    
+    ' 4. Hardware Drivers
+    package "Hardware Drivers" as HwPkg {
+        component "RailCom" as RailCom
+        component "Motor" as Motor
+        component "Lights" as Lights
+        component "Effects" as Effects
+    }
+}
+
+' --- SIDE LEVEL: Debug ---
+package "Debug Interface" {
+    component "CLI" as CLI
+    component "Debug" as Debug
+    component "Print" as Print
+    
+    ' Vertikale Anordnung: CLI -> Debug -> Print
+    CLI -down-> Debug
+    Debug -down-> Print
+}
+
+' --- CONNECTIONS ---
+
+' A. Configuration to API
+CV <=> API : Config Events
+
+' B. Signal Flow: Rails -> Protocols -> API
+' CHANGED: Rails is now above, so it points DOWN to protocols
+Rails -down-> SX
+Rails -down-> MM
+Rails -down-> DCC
+
+SX -down-> API
+MM -down-> API
+DCC -down-> API
+
+' C. Control Flow: API -> Hardware
+API -down-> RailCom
+API -down-> Motor
+API -down-> Lights
+API -down-> Effects
+
+' D. Feedback Loop: Rails <-> RailCom
+' CHANGED: RailCom is at bottom, Rails at top, so feedback points UP
+Rails <-- RailCom : Feedback
+
+' E. API to Debug
+API -right-> Debug : Event Stream
+
+' Layout Helper
+' CHANGED: Enforce Rails above Protocols
+Rails -[hidden]down- ProtoPkg
+ProtoPkg -[hidden]down- API
+@enduml
