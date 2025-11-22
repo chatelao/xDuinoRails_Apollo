@@ -1,5 +1,5 @@
 @startuml
-!option handwritten true
+skinparam handwritten true
 
 title System Architektur (Decoder Internal)
 
