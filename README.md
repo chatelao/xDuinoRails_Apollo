@@ -9,6 +9,10 @@ This repository contains the documentation, schematics, and source code for the 
 *   **Flexible Function Mapping:** The `FunctionManager` allows for declarative mapping of function keys to physical outputs and behaviors.
 *   **Modern Hardware:** The decoder is designed for the Seeed Studio XIAO RP2040 microcontroller.
 
+## Architecture
+
+![Architecture Diagram](docs/architecture.png)
+
 ## Repository Structure
 
 *   `docs/`: Contains all project documentation, including concepts for the sound and light systems.

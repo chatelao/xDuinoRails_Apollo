@@ -2,6 +2,8 @@
 
 This document provides a high-level technical overview of the software and hardware architecture of the **xDuinoRails_Apollo** multi-protocol locomotive decoder.
 
+![Architecture Diagram](docs/architecture.png)
+
 ## 1. Hardware Platform
 
 The project is designed around the **Seeed Studio XIAO RP2040** microcontroller.
