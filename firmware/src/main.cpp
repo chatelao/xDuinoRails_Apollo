@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include "config.h"
 #include "cv_definitions.h"
-#include <XDuinoRails_MotorDriver.h>
+#include <XDuinoRails_MotorControl.h>
 #include "CVManager.h"
 #include "CVManagerAdapter.h"
 #include <xDuinoRails_DccLightsAndFunctions.h>

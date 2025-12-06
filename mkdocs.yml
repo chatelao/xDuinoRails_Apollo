@@ -1,0 +1,75 @@
+site_name: xDuinoRails Apollo
+site_description: Documentation for the xDuinoRails Apollo multi-protocol locomotive decoder.
+repo_url: https://github.com/Seeed-Studio/xDuinoRails_Apollo
+repo_name: xDuinoRails_Apollo
+edit_uri: ""
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+
+docs_dir: docs
+
+nav:
+  - Home: README.md
+  - Project Info:
+    - Architecture: ARCHITECTURE.md
+    - Roadmap: ROADMAP.md
+    - Implementation Status: IMPLEMENTATION_STATUS.MD
+    - Contributing: CONTRIBUTE.MD
+    - License: LICENSE.md
+  - Concepts:
+    - Core Concepts: CORE_CONCEPTS.MD
+    - Light & Aux: LIGHT_AND_AUX_CONCEPT.MD
+    - Sound: SOUND_CONCEPT.MD
+    - Documentation: DOCUMENTATION_CONCEPT.MD
+  - User Guide:
+    - Getting Started: GETTING_STARTED.MD
+    - How to Use: HOW_TO_USE.MD
+    - User Manual: USER_MANUAL.MD
+    - CV Mapping: CV_MAPPING.MD
+  - Developer Guide:
+    - Developer Reference: DEVELOPER_REFERENCE.MD
+    - Technical Debts: TECHNICAL_DEBTS.MD
+    - Sound Roadmap: SOUND_ROADMAP.MD
+  - Standards (RCN):
+    - RCN-200 (DE): RCN-200.DE.MD
+    - RCN-200 (EN): RCN-200.EN.MD
+    - RCN-225 (DE): RCN-225.DE.MD
+    - RCN-225 (EN): RCN-225.EN.MD
+    - RCN-226 (DE): RCN-226.DE.MD
+    - RCN-226 (EN): RCN-226.EN.MD
+    - RCN-227 (DE): RCN-227.DE.MD
+    - RCN-227 (EN): RCN-227.EN.MD
+
+markdown_extensions:
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+
+plugins:
+  - search
