@@ -15,13 +15,12 @@ theme:
     - scheme: default
       primary: teal
       accent: purple
-    - scheme: slate
-      primary: teal
-      accent: purple
       toggle:
         icon: material/brightness-4
         name: Switch to dark mode
-    - scheme: default
+    - scheme: slate
+      primary: teal
+      accent: purple
       toggle:
         icon: material/brightness-7
         name: Switch to light mode
