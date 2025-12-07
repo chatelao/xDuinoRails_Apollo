@@ -90,6 +90,40 @@ This document describes the necessary steps to develop a fully functional multi-
     - [ ] Create assembly diagrams and a Bill of Materials (BOM).
     - [ ] Publish the hardware design files in the `hardware/` directory.
 
+## Phase 7: Common Functional Enhancements
+
+- [ ] **1. Braking Systems**
+    - [ ] Implement ABC Braking (Automatic Braking Control).
+    - [ ] Implement DC Braking support.
+    - [ ] Implement Constant Braking Distance logic.
+- [ ] **2. Operational Features**
+    - [ ] Implement Shunting Mode (half speed, reduced momentum).
+    - [ ] Implement Momentum Disable (ABV Off) via function key.
+    - [ ] Implement Advanced Consisting (CV 19).
+    - [ ] Implement Speed Tables (3-point and 28-point).
+- [ ] **3. Advanced Effects**
+    - [ ] Implement Coupler Waltz (Kupplungswalzer).
+- [ ] **4. Hardware Support**
+    - [ ] PowerPack / Keep-alive support.
+
+## Phase 8: High-End / Premium Features (Research Findings)
+
+- [ ] **1. Advanced Motor Control**
+    - [ ] Implement "Autotune" (Automatic Motor Calibration).
+    - [ ] Implement Variable PWM Frequency (10kHz - 50kHz).
+- [ ] **2. Simulation & Physics**
+    - [ ] Implement Consumables Simulation (Fuel, Water, Sand) with load dependence.
+    - [ ] Implement "Coasting Mode" logic (performance reduction when empty).
+    - [ ] Implement Heavy Load Simulation.
+- [ ] **3. Dynamic Sound Enhancements**
+    - [ ] Implement Dynamic Digital Exhaust (DDE) / Load-dependent sound intensity.
+    - [ ] Implement Grade Crossing Logic (Auto-sequenced horn/bell).
+    - [ ] Implement Audio Equalizer (7-band) and Reverb effects.
+- [ ] **4. Safety & Feedback**
+    - [ ] Implement Dead Man's Button (Sifa) logic.
+    - [ ] Implement Software Overload Protection (current monitoring).
+    - [ ] Support for External Sensors (Wheel Cam/Hall Sensor) for synchronized sound.
+
 ## Future Ideas
 
 - [ ] RailCom Support
