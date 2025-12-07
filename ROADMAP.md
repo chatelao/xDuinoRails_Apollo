@@ -106,6 +106,24 @@ This document describes the necessary steps to develop a fully functional multi-
 - [ ] **4. Hardware Support**
     - [ ] PowerPack / Keep-alive support.
 
+## Phase 8: High-End / Premium Features (Research Findings)
+
+- [ ] **1. Advanced Motor Control**
+    - [ ] Implement "Autotune" (Automatic Motor Calibration).
+    - [ ] Implement Variable PWM Frequency (10kHz - 50kHz).
+- [ ] **2. Simulation & Physics**
+    - [ ] Implement Consumables Simulation (Fuel, Water, Sand) with load dependence.
+    - [ ] Implement "Coasting Mode" logic (performance reduction when empty).
+    - [ ] Implement Heavy Load Simulation.
+- [ ] **3. Dynamic Sound Enhancements**
+    - [ ] Implement Dynamic Digital Exhaust (DDE) / Load-dependent sound intensity.
+    - [ ] Implement Grade Crossing Logic (Auto-sequenced horn/bell).
+    - [ ] Implement Audio Equalizer (7-band) and Reverb effects.
+- [ ] **4. Safety & Feedback**
+    - [ ] Implement Dead Man's Button (Sifa) logic.
+    - [ ] Implement Software Overload Protection (current monitoring).
+    - [ ] Support for External Sensors (Wheel Cam/Hall Sensor) for synchronized sound.
+
 ## Future Ideas
 
 - [ ] RailCom Support
