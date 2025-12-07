@@ -191,6 +191,10 @@ void processFunctionGroup(int start_fn, int count, uint8_t state_mask) {
                     if (vsdReader.get_file_data(trigger->sound_name.c_str(), &wav_data, &wav_size)) {
                         WAVStream* stream = new WAVStream();
                         if (stream->begin(wav_data, wav_size)) {
+                            const char* sound_type = vsdConfigParser.get_sound_type(trigger->sound_name.c_str());
+                            if (sound_type && strcmp(sound_type, "CONTINUOUS_LOOP") == 0) {
+                                stream->setLooping(true);
+                            }
                             mixer.play(stream);
                         } else {
                             // The stream failed to init, so we must clean up both the stream and the data.

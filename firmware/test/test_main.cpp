@@ -31,6 +31,8 @@ public:
 // Include the source files directly to resolve linker errors in the test environment.
 #include "AuxController.cpp"
 #include "CVManager.cpp"
+// Include WAVStream for testing
+#include "sound/WAVStream.cpp"
 
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Test Globals & Setup
@@ -374,6 +376,74 @@ void test_rcn227_per_output_v2_mapping() {
     TEST_ASSERT_FALSE(lf->isActive());
 }
 
+/**
+ * @brief Test WAVStream looping functionality.
+ */
+void test_wav_stream_looping() {
+    WAVStream stream;
+
+    // Create a minimal 8-bit mono WAV in memory (Header + 2 bytes data)
+    // Data: 0x80 (mid), 0xFF (max)
+    uint8_t wav_data[] = {
+        'R', 'I', 'F', 'F',
+        38, 0, 0, 0,  // Chunk Size (36 + 2)
+        'W', 'A', 'V', 'E',
+        'f', 'm', 't', ' ',
+        16, 0, 0, 0,  // Subchunk1 Size
+        1, 0,         // PCM
+        1, 0,         // Mono
+        68, 172, 0, 0, // 44100 Hz
+        68, 172, 0, 0, // Byte Rate
+        1, 0,         // Block Align
+        8, 0,         // Bits per Sample
+        'd', 'a', 't', 'a',
+        2, 0, 0, 0,   // Subchunk2 Size
+        0x80, 0xFF    // Data
+    };
+
+    TEST_ASSERT_TRUE(stream.begin(wav_data, sizeof(wav_data)));
+
+    // Test without looping
+    stream.setLooping(false);
+    int16_t l, r;
+
+    // Sample 1
+    stream.get_next_sample(&l, &r);
+    TEST_ASSERT_EQUAL(0, l); // 0x80 -> 0
+
+    // Sample 2
+    stream.get_next_sample(&l, &r);
+    // 0xFF -> 255 - 128 = 127 -> <<8 = 32512
+    TEST_ASSERT_EQUAL(32512, l);
+
+    // End of stream
+    TEST_ASSERT_TRUE(stream.is_finished());
+    stream.get_next_sample(&l, &r);
+    TEST_ASSERT_EQUAL(0, l);
+
+
+    // Test WITH looping
+    stream.rewind();
+    stream.setLooping(true);
+
+    // Sample 1
+    stream.get_next_sample(&l, &r);
+    TEST_ASSERT_EQUAL(0, l);
+
+    // Sample 2
+    stream.get_next_sample(&l, &r);
+    TEST_ASSERT_EQUAL(32512, l);
+
+    // Should NOT be finished
+    TEST_ASSERT_FALSE(stream.is_finished());
+
+    // Loop back to Sample 1
+    stream.get_next_sample(&l, &r);
+    TEST_ASSERT_EQUAL(0, l);
+
+    TEST_ASSERT_FALSE(stream.is_finished());
+}
+
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // Main Test Runner
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -395,6 +465,7 @@ void setup() {
     RUN_TEST(test_rcn227_per_function_mapping);
     RUN_TEST(test_rcn227_per_output_v1_mapping);
     RUN_TEST(test_rcn227_per_output_v2_mapping);
+    RUN_TEST(test_wav_stream_looping);
     UNITY_END();
 }
 

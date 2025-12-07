@@ -22,6 +22,9 @@ public:
     // Resets the playback position to the beginning of the audio data.
     void rewind();
 
+    // Enables or disables looping playback.
+    void setLooping(bool looping);
+
     // Public accessors for WAV properties
     uint32_t get_sample_rate() const;
     uint16_t get_num_channels() const;
@@ -34,6 +37,7 @@ private:
     uint8_t* _audio_data;
     size_t _audio_data_size;
     size_t _playback_position; // Position in bytes
+    bool _is_looping;
 
     // WAV header format
     struct wav_header_t {
