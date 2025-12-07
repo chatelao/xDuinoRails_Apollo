@@ -90,6 +90,22 @@ This document describes the necessary steps to develop a fully functional multi-
     - [ ] Create assembly diagrams and a Bill of Materials (BOM).
     - [ ] Publish the hardware design files in the `hardware/` directory.
 
+## Phase 7: Common Functional Enhancements
+
+- [ ] **1. Braking Systems**
+    - [ ] Implement ABC Braking (Automatic Braking Control).
+    - [ ] Implement DC Braking support.
+    - [ ] Implement Constant Braking Distance logic.
+- [ ] **2. Operational Features**
+    - [ ] Implement Shunting Mode (half speed, reduced momentum).
+    - [ ] Implement Momentum Disable (ABV Off) via function key.
+    - [ ] Implement Advanced Consisting (CV 19).
+    - [ ] Implement Speed Tables (3-point and 28-point).
+- [ ] **3. Advanced Effects**
+    - [ ] Implement Coupler Waltz (Kupplungswalzer).
+- [ ] **4. Hardware Support**
+    - [ ] PowerPack / Keep-alive support.
+
 ## Future Ideas
 
 - [ ] RailCom Support
