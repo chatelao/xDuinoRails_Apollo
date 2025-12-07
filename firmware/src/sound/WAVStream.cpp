@@ -1,7 +1,7 @@
 #include "WAVStream.h"
 #include <string.h>
 
-WAVStream::WAVStream() : _data(nullptr), _size(0), _audio_data(nullptr), _audio_data_size(0), _playback_position(0) {
+WAVStream::WAVStream() : _data(nullptr), _size(0), _audio_data(nullptr), _audio_data_size(0), _playback_position(0), _is_looping(false) {
     memset(&_header, 0, sizeof(wav_header_t));
 }
 
@@ -43,6 +43,20 @@ void WAVStream::get_next_sample(int16_t* left, int16_t* right) {
         return;
     }
 
+    // Handle Looping: If we are at the end and looping is enabled, reset to start.
+    // Note: We do this check before reading. If _playback_position was incremented
+    // to match _audio_data_size in the previous call, we wrap around now.
+    if (_playback_position >= _audio_data_size && _is_looping) {
+        _playback_position = 0;
+    }
+
+    // Double check if we are finished (non-looping case or empty file)
+    if (_playback_position >= _audio_data_size) {
+        *left = 0;
+        *right = 0;
+        return;
+    }
+
     if (_header.bits_per_sample == 16) {
         if (_header.num_channels == 2) {
             *left = *((int16_t*)(_audio_data + _playback_position));
@@ -72,11 +86,18 @@ void WAVStream::get_next_sample(int16_t* left, int16_t* right) {
 }
 
 bool WAVStream::is_finished() const {
+    if (_is_looping) {
+        return false;
+    }
     return _playback_position >= _audio_data_size;
 }
 
 void WAVStream::rewind() {
     _playback_position = 0;
+}
+
+void WAVStream::setLooping(bool looping) {
+    _is_looping = looping;
 }
 
 uint32_t WAVStream::get_sample_rate() const {
