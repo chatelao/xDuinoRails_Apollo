@@ -135,6 +135,9 @@ This document describes the necessary steps to develop a fully functional multi-
 - [ ] **3. Script Management**
     - [ ] Implement a mechanism to load Lua scripts from the filesystem (LittleFS).
     - [ ] Define the script lifecycle (e.g., `init.lua` on startup, event-driven callbacks).
+- [ ] **4. Web Serial Tools**
+    - [ ] Implement firmware support for file transfer (upload/download) over USB Serial.
+    - [ ] Create a web interface using Web Serial API to manage (upload/download) Lua scripts.
 
 ## Future Ideas
 
