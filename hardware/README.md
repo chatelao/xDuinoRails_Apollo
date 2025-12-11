@@ -5,6 +5,7 @@ This directory contains the KiCad schematic for the RP2040-based decoder hardwar
 ## Seeed XIAO RP2040 is used in the 1st Gen decoders
 
 <img width="350" alt="image" src="https://github.com/user-attachments/assets/27688da3-2d20-4c41-9307-29afc06e1df2" />
+<img width="500" alt="image" src="https://github.com/user-attachments/assets/d61fd47c-b057-43bf-954d-9a05dfa36e78" />
 
 ### Revision 1 - Oct 2025 - XDR Fortuna with BDR6133 
 
