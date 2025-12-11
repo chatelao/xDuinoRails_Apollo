@@ -16,8 +16,8 @@ The pin assignment corresponds to the configuration in `firmware/src/config.h` (
 |----------|----------|------|-------------|
 | BEMF B | D2 / A2 | 28 | Back-EMF Measurement Input B |
 | BEMF A | D3 / A3 | 29 | Back-EMF Measurement Input A |
-| Motor A | D7 | 0 | Motor Output A (PWM to BDR6133) |
-| Motor B | D8 | 1 | Motor Output B (PWM to BDR6133) |
+| Motor A | D7 | 1 | Motor Output A (PWM to BDR6133) |
+| Motor B | D8 | 2 | Motor Output B (PWM to BDR6133) |
 
 ### Revision 2 - XDR Thor with BDR6133 
 
