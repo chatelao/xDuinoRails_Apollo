@@ -37,7 +37,7 @@ We will restructure the `docs/` folder to separate source material from build ar
 │   │   ├── conf.py          # Sphinx configuration
 │   │   ├── index.rst        # Root of the documentation tree (Table of Contents)
 │   │   ├── _static/         # Custom CSS/images
-│   │   ├── images/          # Moved image files (architecture.png, etc.)
+│   │   ├── images/          # Moved image files
 │   │   ├── manuals/         # Folder for user manuals
 │   │   │   ├── USER_MANUAL.md
 │   │   │   └── GETTING_STARTED.md
