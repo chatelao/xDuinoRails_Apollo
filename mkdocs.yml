@@ -50,14 +50,14 @@ nav:
     - Technical Debts: TECHNICAL_DEBTS.MD
     - Sound Roadmap: SOUND_ROADMAP.MD
   - Standards (RCN):
-    - RCN-200 (DE): RCN-200.DE.MD
-    - RCN-200 (EN): RCN-200.EN.MD
-    - RCN-225 (DE): RCN-225.DE.MD
-    - RCN-225 (EN): RCN-225.EN.MD
-    - RCN-226 (DE): RCN-226.DE.MD
-    - RCN-226 (EN): RCN-226.EN.MD
-    - RCN-227 (DE): RCN-227.DE.MD
-    - RCN-227 (EN): RCN-227.EN.MD
+    - RCN-200 (DE): standards/RCN-200.DE.MD
+    - RCN-200 (EN): standards/RCN-200.EN.MD
+    - RCN-225 (DE): standards/RCN-225.DE.MD
+    - RCN-225 (EN): standards/RCN-225.EN.MD
+    - RCN-226 (DE): standards/RCN-226.DE.MD
+    - RCN-226 (EN): standards/RCN-226.EN.MD
+    - RCN-227 (DE): standards/RCN-227.DE.MD
+    - RCN-227 (EN): standards/RCN-227.EN.MD
 
 markdown_extensions:
   - pymdownx.tasklist:
