@@ -124,6 +124,21 @@ This document describes the necessary steps to develop a fully functional multi-
     - [ ] Implement Software Overload Protection (current monitoring).
     - [ ] Support for External Sensors (Wheel Cam/Hall Sensor) for synchronized sound.
 
+## Phase 9: Scripting & Automation (Lua)
+
+- [ ] **1. Interpreter Integration**
+    - [ ] Select and integrate a lightweight Lua interpreter (e.g., standard Lua 5.4, eLua) suitable for the RP2040.
+    - [ ] Configure the build system (PlatformIO) to compile and link the Lua engine.
+- [ ] **2. Core Bindings (CV Access)**
+    - [ ] Implement C++/Lua bindings to expose the `CVManager` interface.
+    - [ ] Provide Lua functions for reading and writing CVs (e.g., `cv.read(address)`, `cv.write(address, value)`).
+- [ ] **3. Script Management**
+    - [ ] Implement a mechanism to load Lua scripts from the filesystem (LittleFS).
+    - [ ] Define the script lifecycle (e.g., `init.lua` on startup, event-driven callbacks).
+- [ ] **4. Web Serial Tools**
+    - [ ] Implement firmware support for file transfer (upload/download) over USB Serial.
+    - [ ] Create a web interface using Web Serial API to manage (upload/download) Lua scripts.
+
 ## Future Ideas
 
 - [ ] RailCom Support
