@@ -101,6 +101,9 @@ void setup() {
   notifyCVChange(CV_START_VOLTAGE, cvManager.readCV(CV_START_VOLTAGE));
   notifyCVChange(CV_ACCELERATION_RATE, cvManager.readCV(CV_ACCELERATION_RATE));
   notifyCVChange(CV_DECELERATION_RATE, cvManager.readCV(CV_DECELERATION_RATE));
+  notifyCVChange(CV_MOTOR_CONFIGURATION, cvManager.readCV(CV_MOTOR_CONFIGURATION));
+  notifyCVChange(CV_PID_KP, cvManager.readCV(CV_PID_KP));
+  notifyCVChange(CV_PID_KI, cvManager.readCV(CV_PID_KI));
 #elif defined(PROTOCOL_MM)
   attachInterrupt(digitalPinToInterrupt(MM_SIGNAL_PIN), mm_isr, CHANGE);
 
@@ -108,6 +111,10 @@ void setup() {
   motor.setStartupKick(cvManager.readCV(CV_START_VOLTAGE), MOTOR_STARTUP_KICK_DURATION);
   motor.setAcceleration(cvManager.readCV(CV_ACCELERATION_RATE) * 2.5);
   motor.setDeceleration(cvManager.readCV(CV_DECELERATION_RATE) * 2.5);
+
+  // Apply PID settings
+  motor.enablePIController(cvManager.readCV(CV_MOTOR_CONFIGURATION) & 0x01);
+  motor.setPIgains((float)cvManager.readCV(CV_PID_KP) / 100.0f, (float)cvManager.readCV(CV_PID_KI) / 100.0f);
 #endif
 }
 
@@ -133,7 +140,9 @@ void loop() {
     } else if (data->Stop) {
       motor.setTargetSpeed(0);
     } else {
-      uint8_t pps = map(data->Speed, 0, 14, 0, 200);
+      uint8_t max_speed = cvManager.readCV(CV_MAXIMUM_SPEED);
+      if (max_speed == 0) max_speed = 255;
+      uint8_t pps = map(data->Speed, 0, 14, 0, max_speed);
       motor.setTargetSpeed(pps);
     }
     // Update function manager with MM state
@@ -157,7 +166,9 @@ void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DI
   if (Addr == dcc.getAddr()) {
     bool is_forward = (Dir == DCC_DIR_FWD);
     motor.setDirection(is_forward);
-    int pps = map(Speed, 0, 255, 0, 200);
+    uint8_t max_speed = cvManager.readCV(CV_MAXIMUM_SPEED);
+    if (max_speed == 0) max_speed = 255;
+    int pps = map(Speed, 0, 255, 0, max_speed);
     motor.setTargetSpeed(pps);
 
     // Update function manager state
@@ -244,6 +255,17 @@ void notifyCVChange(uint16_t CV, uint8_t Value) {
             break;
         case CV_DECELERATION_RATE:
             motor.setDeceleration(Value * 2.5);
+            break;
+        case CV_MOTOR_CONFIGURATION:
+            motor.enablePIController(Value & 0x01);
+            break;
+        case CV_PID_KP:
+        case CV_PID_KI:
+            {
+                float kp = (float)cvManager.readCV(CV_PID_KP) / 100.0f;
+                float ki = (float)cvManager.readCV(CV_PID_KI) / 100.0f;
+                motor.setPIgains(kp, ki);
+            }
             break;
         // NOTE: Other CVs are applied at startup by the CVLoader.
         // A full implementation might re-run the CVLoader here,
