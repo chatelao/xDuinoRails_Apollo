@@ -41,8 +41,8 @@ We will restructure the `docs/` folder to separate source material from build ar
 │   │   ├── manuals/         # Folder for user manuals
 │   │   │   ├── USER_MANUAL.md
 │   │   │   └── GETTING_STARTED.md
-│   │   ├── references/      # Folder for developer docs
-│   │   │   ├── RCN-200.EN.md
+│   │   ├── standards/       # Folder for RCN standards
+│   │   │   ├── RCN-200.EN.MD
 │   │   │   └── ...
 │   │   └── requirements.txt # Python dependencies (sphinx, myst-parser, etc.)
 │   ├── build/               # Git-ignored directory for output
