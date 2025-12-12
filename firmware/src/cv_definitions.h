@@ -42,6 +42,9 @@
 #define CV_INDEXED_CV_LOW_BYTE 32
 #define CV_OUTPUT_LOCATION_CONFIG_START 33 // CVs 33-46
 #define CV_OUTPUT_LOCATION_CONFIG_END 46
+#define CV_MOTOR_CONFIGURATION 50
+#define CV_PID_KP 51
+#define CV_PID_KI 52
 #define CV_FORWARD_TRIM 66
 #define CV_SPEED_TABLE_START 67 // CVs 67-94
 #define CV_SPEED_TABLE_END 94
@@ -73,6 +76,9 @@
 #define DECODER_DEFAULT_MANUFACTURER_ID 165 // NMRA ID for DIY/Home-built decoders
 #define DECODER_DEFAULT_CV29_CONFIG 6       // Enable 28/128 speed steps and analog mode
 #define DECODER_DEFAULT_VERSION_ID 1        // Firmware version 1
+#define DECODER_DEFAULT_MOTOR_CONFIGURATION 1 // Enable BEMF by default
+#define DECODER_DEFAULT_PID_KP 10           // Kp = 0.10
+#define DECODER_DEFAULT_PID_KI 10           // Ki = 0.10
 
 // RCN-225 Default Function Mappings (CVs 33-46)
 #define DECODER_DEFAULT_F0_FWD_MAPPING 1   // Map F0 Fwd to Output 1
