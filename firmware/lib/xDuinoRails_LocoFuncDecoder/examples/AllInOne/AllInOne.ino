@@ -2,61 +2,40 @@
 #include "xDuinoRails_LocoFuncDecoder.h"
 
 // =================================================================================
-// Example: All-In-One Decoder
-// This example enables Motor, Sound, and Function features.
+// Example: All In One (Full Decoder)
+// Enables Motor, Sound, and Lights.
 // =================================================================================
-
-// Define the protocol (handled by build flags in PlatformIO, but required for Library usage)
-// #define PROTOCOL_DCC or #define PROTOCOL_MM
-// (Already defined in platformio.ini or config header)
 
 LocoFuncDecoder decoder;
 
 #if defined(PROTOCOL_DCC)
 #define DCC_SIGNAL_PIN 7
-
-// Global Callbacks for NmraDcc
 void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
-    if (globalDecoderInstance) {
-        globalDecoderInstance->handleDccSpeed(Addr, Speed, (Dir == DCC_DIR_FWD), SpeedSteps);
-    }
+    if (globalDecoderInstance) globalDecoderInstance->handleDccSpeed(Addr, Speed, (Dir == DCC_DIR_FWD), SpeedSteps);
 }
 void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
-    if (globalDecoderInstance) {
-        globalDecoderInstance->handleDccFunc(Addr, FuncGrp, FuncState);
-    }
+    if (globalDecoderInstance) globalDecoderInstance->handleDccFunc(Addr, FuncGrp, FuncState);
 }
 void notifyCVChange(uint16_t CV, uint8_t Value) {
-    if (globalDecoderInstance) {
-        globalDecoderInstance->handleCVChange(CV, Value);
-    }
+    if (globalDecoderInstance) globalDecoderInstance->handleCVChange(CV, Value);
 }
 #elif defined(PROTOCOL_MM)
 #define MM_SIGNAL_PIN 7
-void mm_isr() {
-    decoder.getMM().PinChange();
-}
+void mm_isr() { decoder.getMM().PinChange(); }
 #endif
 
 void setup() {
     LocoFuncDecoderConfig config;
-
-    // --- Enable All Features ---
     config.enableMotor = true;
-    config.enableSound = true; // Set to true if sound is desired
+    config.enableSound = true;
     config.enableLights = true;
 
-    // --- Pin Configuration ---
-    // Using default pins from original project
+    // Use default pins
     config.motorPinA = 0;
     config.motorPinB = 1;
     config.bemfPinA = A3;
     config.bemfPinB = A2;
-
-    config.useDefaultPinout = true; // Use default pins for Lights
-    // Note: Default lights pin 28 (A2) and 29 (A3) conflict with BEMF in original config!
-    // For this example, if BEMF is used, we should ideally change Light pins.
-    // However, keeping original behavior for now.
+    config.useDefaultPinout = true;
 
     decoder.begin(config);
 
