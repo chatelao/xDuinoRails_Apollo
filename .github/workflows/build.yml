@@ -47,11 +47,15 @@ jobs:
 
     - name: Build DCC
       run: |
+        # Ensure picotool is in PATH
+        export PATH=$PATH:~/.platformio/packages/tool-picotool-rp2040-earlephilhower
         pio run -d firmware -e xiao_dcc
         mv firmware/.pio/build/xiao_dcc/firmware.uf2 firmware/Apollo-${{ matrix.example }}-dcc.uf2
 
     - name: Build MM
       run: |
+        # Ensure picotool is in PATH
+        export PATH=$PATH:~/.platformio/packages/tool-picotool-rp2040-earlephilhower
         pio run -d firmware -e xiao_mm
         mv firmware/.pio/build/xiao_mm/firmware.uf2 firmware/Apollo-${{ matrix.example }}-mm.uf2
 
