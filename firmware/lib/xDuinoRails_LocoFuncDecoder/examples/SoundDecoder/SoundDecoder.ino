@@ -2,8 +2,8 @@
 #include "xDuinoRails_LocoFuncDecoder.h"
 
 // =================================================================================
-// Example: Lok Decoder
-// Enables Motor Control and Lights. Sound is disabled.
+// Example: Sound Decoder
+// Enables Sound and Lights. Motor is disabled (or dummy).
 // =================================================================================
 
 LocoFuncDecoder decoder;
@@ -26,14 +26,17 @@ void mm_isr() { decoder.getMM().PinChange(); }
 
 void setup() {
     LocoFuncDecoderConfig config;
-    config.enableMotor = true;
-    config.enableSound = false; // Disabled
+    config.enableMotor = false; // Disabled
+    config.enableSound = true;
     config.enableLights = true;
 
-    config.motorPinA = 0;
-    config.motorPinB = 1;
-    config.bemfPinA = A3;
-    config.bemfPinB = A2;
+    // config.useDefaultPinout = true;
+    // We can define pins manually to avoid Motor pin conflicts if needed,
+    // but here Motor is disabled so pins are free.
+
+    // Example: Manual light setup
+    config.pinHeadlightFwd = 26;
+    config.pinHeadlightRev = 27;
     config.useDefaultPinout = true;
 
     decoder.begin(config);

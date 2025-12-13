@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        protocol: [dcc, mm]
+        example: [LokDecoder, SoundDecoder, FunctionDecoder, AllInOne]
 
     steps:
     - uses: actions/checkout@v4
@@ -42,14 +42,28 @@ jobs:
         path: firmware/.pio
         key: ${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
 
-    - name: Build Firmware (${{ matrix.protocol }})
-      run: pio run -d firmware -e xiao_${{ matrix.protocol }}
+    - name: Prepare Example ${{ matrix.example }}
+      run: python scripts/prepare_example.py ${{ matrix.example }}
+
+    - name: Build DCC
+      run: |
+        # Ensure picotool is in PATH
+        export PATH=$PATH:~/.platformio/packages/tool-picotool-rp2040-earlephilhower
+        pio run -d firmware -e xiao_dcc
+        mv firmware/.pio/build/xiao_dcc/firmware.uf2 firmware/Apollo-${{ matrix.example }}-dcc.uf2
+
+    - name: Build MM
+      run: |
+        # Ensure picotool is in PATH
+        export PATH=$PATH:~/.platformio/packages/tool-picotool-rp2040-earlephilhower
+        pio run -d firmware -e xiao_mm
+        mv firmware/.pio/build/xiao_mm/firmware.uf2 firmware/Apollo-${{ matrix.example }}-mm.uf2
 
     - name: Archive Firmware
       uses: actions/upload-artifact@v4
       with:
-        name: firmware-${{ matrix.protocol }}
-        path: firmware/.pio/build/xiao_${{ matrix.protocol }}/firmware.uf2
+        name: firmware-${{ matrix.example }}
+        path: firmware/Apollo-*.uf2
 
   publish:
     runs-on: ubuntu-latest
@@ -58,32 +72,35 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Download DCC Firmware
+    - name: Download LokDecoder Firmware
       uses: actions/download-artifact@v4
       with:
-        name: firmware-dcc
-        path: firmware-dcc
+        name: firmware-LokDecoder
+        path: dist
 
-    - name: Download MM Firmware
+    - name: Download SoundDecoder Firmware
       uses: actions/download-artifact@v4
       with:
-        name: firmware-mm
-        path: firmware-mm
+        name: firmware-SoundDecoder
+        path: dist
 
-    - name: Upload DCC Firmware to Release
+    - name: Download FunctionDecoder Firmware
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware-FunctionDecoder
+        path: dist
+
+    - name: Download AllInOne Firmware
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware-AllInOne
+        path: dist
+
+    - name: Upload Firmware to Release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: firmware-dcc/firmware.uf2
-        asset_name: xiao_dcc.uf2
+        file: dist/*.uf2
         tag: ${{ github.ref }}
         overwrite: true
-
-    - name: Upload MM Firmware to Release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: firmware-mm/firmware.uf2
-        asset_name: xiao_mm.uf2
-        tag: ${{ github.ref }}
-        overwrite: true
+        file_glob: true
