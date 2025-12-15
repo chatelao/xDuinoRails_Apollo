@@ -48,6 +48,9 @@ void SoftwareMixer::update() {
     // Mix active channels
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         if (_channels[i].is_active) {
+            // Service the stream to refill its buffer from disk
+            _channels[i].stream->service();
+
             if (_channels[i].stream->is_finished()) {
                 delete _channels[i].stream;
                 _channels[i].stream = nullptr;
