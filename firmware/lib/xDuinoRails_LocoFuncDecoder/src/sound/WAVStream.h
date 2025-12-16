@@ -2,15 +2,20 @@
 #define WAV_STREAM_H
 
 #include <Arduino.h>
+#include <LittleFS.h>
+
+#define WAV_STREAM_BUFFER_SIZE 1024
 
 class WAVStream {
 public:
     WAVStream();
     ~WAVStream();
 
-    // Parses the WAV header from the provided data buffer.
-    // The buffer is NOT copied, so the caller must ensure it remains valid.
-    bool begin(uint8_t* data, size_t size);
+    // Initializes the stream with a file from LittleFS.
+    bool begin(File file);
+
+    // Refills the internal buffer from the file. Must be called frequently.
+    void service();
 
     // Gets the next audio sample. Samples are returned as signed 16-bit integers.
     // Mono samples will be duplicated to both left and right channels.
@@ -32,12 +37,20 @@ public:
     size_t get_total_samples() const;
 
 private:
-    uint8_t* _data;
-    size_t _size;
-    uint8_t* _audio_data;
-    size_t _audio_data_size;
-    size_t _playback_position; // Position in bytes
+    File _file;
+
+    // Ring Buffer
+    uint8_t _buffer[WAV_STREAM_BUFFER_SIZE];
+    size_t _buffer_head; // Write index
+    size_t _buffer_tail; // Read index
+    size_t _buffer_count; // Number of bytes in buffer
+
+    size_t _data_start_offset; // File offset where audio data begins
+    size_t _data_length;       // Total bytes of audio data (from header)
+    size_t _bytes_read_from_file; // Tracker for total bytes read (to detect end of data chunk)
+
     bool _is_looping;
+    bool _finished;
 
     // WAV header format
     struct wav_header_t {

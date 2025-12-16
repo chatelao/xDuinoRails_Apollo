@@ -56,6 +56,7 @@ void LocoFuncDecoder::begin(const LocoFuncDecoderConfig& conf) {
 
         // VSD Loading
         if (LittleFS.begin()) {
+             // Initialize VSDReader which will extract assets to cache
              if (vsdReader->begin("/test.vsd")) {
                 uint8_t* xml_data = nullptr;
                 size_t xml_size = 0;
@@ -183,19 +184,21 @@ void LocoFuncDecoder::processFunctionGroup(int start_fn, int count, uint8_t stat
                  for (int j = 0; j < vsdConfigParser->get_trigger_count(); j++) {
                     const SoundTrigger* trigger = &vsdConfigParser->get_triggers()[j];
                     if (trigger->function_number == current_fn) {
-                        uint8_t* wav_data = nullptr;
-                        size_t wav_size = 0;
-                        if (vsdReader->get_file_data(trigger->sound_name.c_str(), &wav_data, &wav_size)) {
-                            WAVStream* stream = new WAVStream();
-                            if (stream->begin(wav_data, wav_size)) {
-                                const char* sound_type = vsdConfigParser->get_sound_type(trigger->sound_name.c_str());
-                                if (sound_type && strcmp(sound_type, "CONTINUOUS_LOOP") == 0) {
-                                    stream->setLooping(true);
+                        String assetPath = vsdReader->get_asset_path(trigger->sound_name.c_str());
+                        if (assetPath.length() > 0) {
+                            File audioFile = LittleFS.open(assetPath, "r");
+                            if (audioFile) {
+                                WAVStream* stream = new WAVStream();
+                                if (stream->begin(audioFile)) {
+                                    const char* sound_type = vsdConfigParser->get_sound_type(trigger->sound_name.c_str());
+                                    if (sound_type && strcmp(sound_type, "CONTINUOUS_LOOP") == 0) {
+                                        stream->setLooping(true);
+                                    }
+                                    mixer->play(stream);
+                                } else {
+                                    delete stream;
+                                    audioFile.close();
                                 }
-                                mixer->play(stream);
-                            } else {
-                                delete stream;
-                                free(wav_data);
                             }
                         }
                     }
