@@ -38,8 +38,8 @@ This document describes the necessary steps to develop a fully functional multi-
     - [x] Implement a CV-based loading mechanism (`CVLoader`, `CVManager`).
 - [x] **2. Advanced Effects & Mapping**
     - [x] Implement the complete, multi-level table logic for function mapping (CV-based, `CVLoader`).
-    - [x] Implement all light effects provided in the concept (`LIGHT_AND_AUX_CONCEPT.MD`) (`Steady`, `Dimming`, `Flicker`, `Strobe`, `MarsLight`, `SoftStartStop`).
-    - [x] Develop a comprehensive CV table for configuration (see `CV_MAPPING.md`).
+    - [x] Implement all light effects provided in the concept (`./LIGHT_AND_AUX_CONCEPT.MD`) (`Steady`, `Dimming`, `Flicker`, `Strobe`, `MarsLight`, `SoftStartStop`).
+    - [x] Develop a comprehensive CV table for configuration (see `../docs/CV_MAPPING.MD`).
 - [x] **3. Auxiliary Functions**
     - [x] Implement the `SERVO_CONTROL` effect.
     - [x] Implement the `SMOKE_GENERATOR` effect.
@@ -56,7 +56,7 @@ This document describes the necessary steps to develop a fully functional multi-
     - [ ] Implement the RCN-227 function mapping as a new, selectable mode (via CV 96).
     - [ ] The existing proprietary mapping system will be retained as a selectable alternative.
 - [x] **3. Documentation Overhaul**
-    - [x] Rewrite `CV_MAPPING.md` to reflect the new standardized structure.
+    - [x] Rewrite `../docs/CV_MAPPING.MD` to reflect the new standardized structure.
     - [x] Translate all project documentation to English.
 
 ## Phase 5: Sound System Implementation

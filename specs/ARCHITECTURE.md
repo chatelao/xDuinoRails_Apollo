@@ -2,7 +2,7 @@
 
 This document provides a high-level technical overview of the software and hardware architecture of the **xDuinoRails_Apollo** multi-protocol locomotive decoder.
 
-![Architecture Diagram](architecture/architecture.png)
+![Architecture Diagram](../architecture/architecture.png)
 
 ## 1. Hardware Platform
 
