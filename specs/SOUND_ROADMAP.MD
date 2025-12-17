@@ -69,4 +69,4 @@ This document provides a detailed, task-level roadmap for the implementation of 
 - [ ] **3.3. CV Integration & Tooling:**
     - [ ] Implement CVs to override VSD parameters (e.g., master volume, individual sound volumes).
     - [ ] Create a comprehensive JMRI DecoderPro definition file (`.xml`) for all sound-related CVs.
-    - [ ] Document the sound CVs in `CV_MAPPING.md`.
+    - [ ] Document the sound CVs in `../docs/CV_MAPPING.MD`.

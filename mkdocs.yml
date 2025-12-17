@@ -25,39 +25,39 @@ theme:
         icon: material/brightness-7
         name: Switch to light mode
 
-docs_dir: docs
+docs_dir: . # Use root directory to include docs/ and specs/
 
 nav:
   - Home: README.md
-  - Project Info:
-    - Architecture: ARCHITECTURE.md
-    - Roadmap: ROADMAP.md
-    - Implementation Status: IMPLEMENTATION_STATUS.MD
-    - Contributing: CONTRIBUTE.MD
-    - License: LICENSE.md
-  - Concepts:
-    - Core Concepts: CORE_CONCEPTS.MD
-    - Light & Aux: LIGHT_AND_AUX_CONCEPT.MD
-    - Sound: SOUND_CONCEPT.MD
-    - Documentation: DOCUMENTATION_CONCEPT.MD
-  - User Guide:
-    - Getting Started: GETTING_STARTED.MD
-    - How to Use: HOW_TO_USE.MD
-    - User Manual: USER_MANUAL.MD
-    - CV Mapping: CV_MAPPING.MD
-  - Developer Guide:
-    - Developer Reference: DEVELOPER_REFERENCE.MD
-    - Technical Debts: TECHNICAL_DEBTS.MD
-    - Sound Roadmap: SOUND_ROADMAP.MD
-  - Standards (RCN):
-    - RCN-200 (DE): standards/RCN-200.DE.MD
-    - RCN-200 (EN): standards/RCN-200.EN.MD
-    - RCN-225 (DE): standards/RCN-225.DE.MD
-    - RCN-225 (EN): standards/RCN-225.EN.MD
-    - RCN-226 (DE): standards/RCN-226.DE.MD
-    - RCN-226 (EN): standards/RCN-226.EN.MD
-    - RCN-227 (DE): standards/RCN-227.DE.MD
-    - RCN-227 (EN): standards/RCN-227.EN.MD
+  - User Documentation:
+    - Getting Started: docs/GETTING_STARTED.MD
+    - How to Use: docs/HOW_TO_USE.MD
+    - User Manual: docs/USER_MANUAL.MD
+    - CV Mapping: docs/CV_MAPPING.MD
+  - Developer Specifications:
+    - Architecture: specs/ARCHITECTURE.md
+    - Roadmap: specs/ROADMAP.md
+    - Implementation Status: specs/IMPLEMENTATION_STATUS.MD
+    - Contributing: specs/CONTRIBUTE.MD
+    - Concepts:
+      - Core Concepts: specs/CORE_CONCEPTS.MD
+      - Light & Aux: specs/LIGHT_AND_AUX_CONCEPT.MD
+      - Sound: specs/SOUND_CONCEPT.MD
+      - Documentation: specs/DOCUMENTATION_CONCEPT.MD
+    - Developer Guide:
+      - Developer Reference: specs/DEVELOPER_REFERENCE.MD
+      - Technical Debts: specs/TECHNICAL_DEBTS.MD
+      - Sound Roadmap: specs/SOUND_ROADMAP.MD
+    - Standards (RCN):
+      - RCN-200 (DE): specs/standards/RCN-200.DE.MD
+      - RCN-200 (EN): specs/standards/RCN-200.EN.MD
+      - RCN-225 (DE): specs/standards/RCN-225.DE.MD
+      - RCN-225 (EN): specs/standards/RCN-225.EN.MD
+      - RCN-226 (DE): specs/standards/RCN-226.DE.MD
+      - RCN-226 (EN): specs/standards/RCN-226.EN.MD
+      - RCN-227 (DE): specs/standards/RCN-227.DE.MD
+      - RCN-227 (EN): specs/standards/RCN-227.EN.MD
+  - License: LICENSE.md
 
 markdown_extensions:
   - pymdownx.tasklist:

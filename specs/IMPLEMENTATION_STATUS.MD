@@ -1,6 +1,6 @@
 # Implementation Status of LIGHT_AND_AUX_CONCEPT.MD
 
-This document outlines the current implementation status of the features described in `LIGHT_AND_AUX_CONCEPT.MD`.
+This document outlines the current implementation status of the features described in `./LIGHT_AND_AUX_CONCEPT.MD`.
 
 ## 2. Core Concepts
 
@@ -59,7 +59,7 @@ This document outlines the current implementation status of the features describ
 - **Status**: Implemented
 
 - **Details**:
-    - The core data structures (`Condition`, `ConditionVariable`, `MappingRule`) and enums (`TriggerSource`, `TriggerComparator`, `MappingAction`) for the advanced logic engine are fully implemented in `FunctionMapping.h`.
+    - The core data structures (`Condition`, `ConditionVariable`, `MappingRule`) and enums (`TriggerSource`, `TriggerComparator`, `MappingAction`) for the advanced logic engine are fully implemented.
     - The `FunctionManager` is capable of processing these rules.
 
 ### 5.2. RCN-227 Implementation Roadmap
