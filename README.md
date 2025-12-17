@@ -17,13 +17,8 @@ This repository contains the documentation, schematics, and source code for the 
 
 *   `docs/`: Contains all project documentation, including concepts for the sound and light systems.
 *   `firmware/`: Contains the PlatformIO project for the decoder's firmware.
-*   `hardware/`: Contains schematics, wiring diagrams, and other hardware-related files.
 
 ## Getting Started
-
-### Hardware
-
-The decoder is designed for the Seeed Studio XIAO RP2040. You can find more information about the hardware in the `hardware/` directory.
 
 ### Firmware
 
