@@ -1,0 +1,72 @@
+@startuml
+!option handwritten true
+
+title System Class Diagram
+
+class LocoFuncDecoder {
+  - config: LocoFuncDecoderConfig
+  - cvManager: CVManager
+  - auxController: AuxController
+  - soundController: SoundController*
+  - motor: XDuinoRails_MotorDriver*
+  + begin(config)
+  + update()
+  + getAuxController(): AuxController&
+  + getCVManager(): CVManager&
+  + getMotorDriver(): XDuinoRails_MotorDriver*
+  + handleDccSpeed(...)
+  + handleDccFunc(...)
+  + handleCVChange(...)
+}
+
+class CVManager {
+  - _cv_values: map<uint16_t, uint8_t>
+  + begin()
+  + readCV(cv_number): uint8_t
+  + writeCV(cv_number, value)
+  + loadCVsFromEeprom()
+  + writeCvToEeprom(...)
+}
+
+class AuxController {
+  - _outputs: vector<PhysicalOutput>
+  - _logical_functions: vector<LogicalFunction*>
+  - _mapping_rules: vector<MappingRule>
+  - _function_states: bool[]
+  - _direction: DecoderDirection
+  - _speed: uint16_t
+  + addPhysicalOutput(pin, type)
+  + update(delta_ms)
+  + loadFromCVs(cvAccess)
+  + setFunctionState(func, state)
+  + setDirection(direction)
+  + setSpeed(speed)
+}
+
+class SoundController {
+  - _driver: SoundDriver*
+  + begin(): bool
+  + play(track)
+  + setVolume(volume)
+  + loop()
+  + write(data, size): size_t
+}
+
+class XDuinoRails_MotorDriver {
+  - pImpl: XDuinoRails_MotorDriver_Impl*
+  + begin()
+  + update()
+  + setTargetSpeed(speed)
+  + setDirection(forward)
+  + enablePIController(enable)
+  + setPIgains(kp, ki)
+  + setAcceleration(rate)
+  + setDeceleration(rate)
+}
+
+LocoFuncDecoder o-- CVManager
+LocoFuncDecoder o-- AuxController
+LocoFuncDecoder o-- SoundController
+LocoFuncDecoder o-- XDuinoRails_MotorDriver
+
+@enduml
