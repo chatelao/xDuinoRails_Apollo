@@ -9,7 +9,7 @@
 - Keep all user documentation in the “docs” directory and all developer/contributor documentation in the "specs" directory.
 - Create and maintain on every change a “HOW_TO_USE.md”, “USER_MANUAL.md”,
   “CORE_CONCEPTS.md”, “DEVELOPER_REFERENCE.md” and “TECHNICAL_DEBTS.md”
-- Update the architecture image (`architecture/architecture.png`) if the `.puml` source file seems outdated or changed, even if it was previously updated manually.
+- Update the architecture image (`architecture/architecture*.png`) if the `*.puml` source file seems outdated or changed, even if it was previously updated manually.
 
 # Code
 Follow the most used file & code naming conventions in the project:
