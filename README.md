@@ -11,7 +11,7 @@ This repository contains the documentation, schematics, and source code for the 
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture.png)
+![Architecture Diagram](architecture/architecture.png)
 
 ## Repository Structure
 
