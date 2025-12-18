@@ -23,19 +23,6 @@ jobs:
       - name: Install dependencies
         run: pip install mkdocs-material
 
-      - name: Prepare Documentation
-        run: |
-          # Copy root files to docs folder to include them in the site
-          cp README.md docs/README.md
-          cp ARCHITECTURE.md docs/ARCHITECTURE.md
-          cp ROADMAP.md docs/ROADMAP.md
-          cp LICENSE docs/LICENSE.md
-
-          # Fix relative links in the copied root files
-          # Transforms [Link](docs/File.md) to [Link](File.md)
-          sed -i 's|\](docs/|\](|g' docs/README.md
-          sed -i 's|\](docs/|\](|g' docs/ARCHITECTURE.md
-          sed -i 's|\](docs/|\](|g' docs/ROADMAP.md
 
       - name: Configure Git User
         run: |
