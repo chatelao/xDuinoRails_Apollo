@@ -25,7 +25,7 @@ theme:
         icon: material/brightness-7
         name: Switch to light mode
 
-docs_dir: docs # Use root directory to include docs/ and specs/
+docs_dir: .
 
 nav:
   - Home: README.md

@@ -3,6 +3,9 @@
 .history
 .vscode/
 
+# Docs
+site/
+
 # Other
 *.bin
 *.elf
