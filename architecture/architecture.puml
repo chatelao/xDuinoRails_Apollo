@@ -1,5 +1,5 @@
 @startuml
-skinparam handwritten true
+!option handwritten true
 
 title System Architektur (Decoder Internal)
 
@@ -23,20 +23,29 @@ package "Decoder" {
 
     ' 2. Protocols
     package "Protocols" as ProtoPkg {
-        component "SX" as SX
-        component "MM" as MM
-        component "DCC" as DCC
+        component SX
+        component MM
+        component DCC
+        component RailCom
     }
 
     ' 3. Der zentrale Event Hub
     rectangle "xdrTrainAPI\n<<Event API>>" as API #AliceBlue
     
     ' 4. Hardware Drivers
+    package "Logical Drivers" as LgPkg {
+        component Motors
+        component Sounds
+        component Lights
+        component Effects
+    }
+
+    ' 4. Hardware Drivers
     package "Hardware Drivers" as HwPkg {
-        component "RailCom" as RailCom
-        component "Motor" as Motor
-        component "Lights" as Lights
-        component "Effects" as Effects
+        component "Func Drivers" as Func
+        component "Motor BEMF"   as MotorBEMF
+        component "LED Drivers"  as LED
+        component Audio
     }
 }
 
@@ -66,11 +75,18 @@ SX -down-> API
 MM -down-> API
 DCC -down-> API
 
-' C. Control Flow: API -> Hardware
+' C. Control Flow: API -> Logic
 API -down-> RailCom
-API -down-> Motor
+API -down-> Motors
+API -down-> Sounds
 API -down-> Lights
 API -down-> Effects
+
+' C. Control Flow: API -> Logic
+Motors  --> MotorBEMF
+Lights  --> LED
+Sounds  --> Audio
+Effects --> Func
 
 ' D. Feedback Loop: Rails <-> RailCom
 ' CHANGED: RailCom is at bottom, Rails at top, so feedback points UP
