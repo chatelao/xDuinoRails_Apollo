@@ -3,23 +3,23 @@
 
 title System Class Diagram
 
-class LocoFuncDecoder {
+class xdrTrainAPI {
   - config: LocoFuncDecoderConfig
-  - cvManager: CVManager
-  - auxController: AuxController
-  - soundController: SoundController*
-  - motor: XDuinoRails_MotorDriver*
+  - cvManager: "CV Manager"
+  - lights: Lights
+  - sounds: Sounds*
+  - motors: Motors*
   + begin(config)
   + update()
-  + getAuxController(): AuxController&
-  + getCVManager(): CVManager&
-  + getMotorDriver(): XDuinoRails_MotorDriver*
+  + getLights(): Lights&
+  + getCVManager(): "CV Manager"&
+  + getMotors(): Motors*
   + handleDccSpeed(...)
-  + handleDccFunc(...)
-  + handleCVChange(...)
+  - handleDccFunc(...)
+  - handleCVChange(...)
 }
 
-class CVManager {
+class "CV Manager" {
   - _cv_values: map<uint16_t, uint8_t>
   + begin()
   + readCV(cv_number): uint8_t
@@ -28,7 +28,7 @@ class CVManager {
   + writeCvToEeprom(...)
 }
 
-class AuxController {
+class Lights {
   - _outputs: vector<PhysicalOutput>
   - _logical_functions: vector<LogicalFunction*>
   - _mapping_rules: vector<MappingRule>
@@ -43,7 +43,7 @@ class AuxController {
   + setSpeed(speed)
 }
 
-class SoundController {
+class Sounds {
   - _driver: SoundDriver*
   + begin(): bool
   + play(track)
@@ -52,7 +52,7 @@ class SoundController {
   + write(data, size): size_t
 }
 
-class XDuinoRails_MotorDriver {
+class Motors {
   - pImpl: XDuinoRails_MotorDriver_Impl*
   + begin()
   + update()
@@ -64,9 +64,13 @@ class XDuinoRails_MotorDriver {
   + setDeceleration(rate)
 }
 
-LocoFuncDecoder o-- CVManager
-LocoFuncDecoder o-- AuxController
-LocoFuncDecoder o-- SoundController
-LocoFuncDecoder o-- XDuinoRails_MotorDriver
+class Effects {
+}
+
+xdrTrainAPI o-- "CV Manager"
+xdrTrainAPI o-- Lights
+xdrTrainAPI o-- Sounds
+xdrTrainAPI o-- Motors
+xdrTrainAPI o-- Effects
 
 @enduml
