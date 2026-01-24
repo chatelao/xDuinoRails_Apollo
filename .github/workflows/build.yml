@@ -39,8 +39,8 @@ jobs:
     - name: Cache PlatformIO dependencies
       uses: actions/cache@v4
       with:
-        path: firmware/.pio
-        key: ${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+        path: .pio
+        key: ${{ runner.os }}-${{ hashFiles('platformio.ini') }}
 
     - name: Prepare Example ${{ matrix.example }}
       run: python scripts/prepare_example.py ${{ matrix.example }}
@@ -49,21 +49,21 @@ jobs:
       run: |
         # Ensure picotool is in PATH
         export PATH=$PATH:~/.platformio/packages/tool-picotool-rp2040-earlephilhower
-        pio run -d firmware -e xiao_dcc
-        mv firmware/.pio/build/xiao_dcc/firmware.uf2 firmware/Apollo-${{ matrix.example }}-dcc.uf2
+        pio run -e xiao_dcc
+        mv .pio/build/xiao_dcc/firmware.uf2 Apollo-${{ matrix.example }}-dcc.uf2
 
     - name: Build MM
       run: |
         # Ensure picotool is in PATH
         export PATH=$PATH:~/.platformio/packages/tool-picotool-rp2040-earlephilhower
-        pio run -d firmware -e xiao_mm
-        mv firmware/.pio/build/xiao_mm/firmware.uf2 firmware/Apollo-${{ matrix.example }}-mm.uf2
+        pio run -e xiao_mm
+        mv .pio/build/xiao_mm/firmware.uf2 Apollo-${{ matrix.example }}-mm.uf2
 
     - name: Archive Firmware
       uses: actions/upload-artifact@v4
       with:
         name: firmware-${{ matrix.example }}
-        path: firmware/Apollo-*.uf2
+        path: Apollo-*.uf2
 
   publish:
     runs-on: ubuntu-latest
