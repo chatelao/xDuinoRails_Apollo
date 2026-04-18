@@ -9,10 +9,10 @@ Top-level business goal
 - `architecture.puml` : Architecture image kept up to date (rendered to `architecture/architecture*.png`)
 - `DESIGN.md`: The detailed design of the solution, including the architecture, used tech stack for development, production and testing, etc.
 - `ROADMAP.md`: The list of accomplished and planned steps of the project, it should be group into Phases, Tasks and Subtasks if necessary. Checkboxes show the progress to be updated with every increment.
-- `specification`: External Know-How as datasheet, standards, etc. Should be converted to Markdown if PDF, etc.
-- `src`: The source code of the project
-- `test`: All tools, configurations & test cases
-- `build`: Only temporary place for compilation, may be cached by Github
+- `/specification/`: External Know-How as datasheet, standards, etc. Should be converted to Markdown if PDF, etc.
+- `/src/`: The source code of the project
+- `/test/`: All tools, configurations & test cases
+- `/build/`: Only temporary place for compilation, may be cached by Github
 
 # Documentation
 - Keep ".md" documentation filenames uppercase snake
