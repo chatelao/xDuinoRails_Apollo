@@ -16,7 +16,7 @@ This repository contains the documentation, schematics, and source code for the 
 ## Repository Structure
 
 *   `docs/`: Contains all project documentation, including concepts for the sound and light systems.
-*   `firmware/`: Contains the PlatformIO project for the decoder's firmware.
+*   `src/`: Contains the PlatformIO project for the decoder's firmware.
 
 ## Getting Started
 
@@ -31,10 +31,10 @@ The firmware is a PlatformIO project. To build the firmware, you will need to ha
 2.  **Build the firmware:** You can build the firmware for a specific protocol using the following command:
     ```bash
     # For DCC
-    python -m platformio run -d firmware -e xiao_dcc
+    python -m platformio run -e xiao_dcc
 
     # For Märklin-Motorola
-    python -m platformio run -d firmware -e xiao_mm
+    python -m platformio run -e xiao_mm
     ```
 
 ## Long-Term Vision

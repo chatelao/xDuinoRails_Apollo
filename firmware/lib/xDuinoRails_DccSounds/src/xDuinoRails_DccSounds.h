@@ -1,6 +1,0 @@
-#ifndef XDUINORAILS_DCCSOUNDS_H
-#define XDUINORAILS_DCCSOUNDS_H
-
-#include "SoundController.h"
-
-#endif // XDUINORAILS_DCCSOUNDS_H
